@@ -25,8 +25,14 @@ diagramming/whiteboard app (Excalidraw / Eraser.io inspired).
 │   ├── frontend/             # Vite + React + TS frontend (port 5173)
 │   └── backend/              # Node + Hono backend (port 3001, GET /health)
 ├── packages/
-│   ├── shared-types/         # Dependency-free shared TS types
-│   ├── shared-validation/    # Zod schemas mirroring shared-types
+│   ├── shared-types/         # Dependency-free shared TS types (+ geometry primitives)
+│   ├── shared-validation/    # Zod schemas (health, geometry, elements, document)
+│   ├── editor-geometry/      # Pure 2D math (points, matrices, hit-testing, handles)
+│   ├── editor-elements/      # Element union, factories, per-type registry
+│   ├── editor-core/          # Engine: document/scene/camera/selection/commands/clipboard
+│   ├── editor-history/       # Bounded undo/redo stack (implements core's contract)
+│   ├── editor-tools/         # Pointer tools + centralized shortcuts
+│   ├── editor-renderer/      # Deterministic Canvas 2D renderer (Rough.js)
 │   ├── ui/                   # Shared React components (Button smoke-test)
 │   ├── config/               # Shared ESLint baseline + Prettier options
 │   └── tsconfig/             # base / frontend / backend / library presets
@@ -65,9 +71,11 @@ into the client bundle.
 
 ## Workspaces
 
-- **apps/frontend** — Vite SPA. Path alias `@/* → src/*`, typed env in
-  `src/lib/env.ts`, smoke-test page imports `@eraser/shared-types`,
-  `@eraser/shared-validation`, `@eraser/ui`.
+- **apps/frontend** — Graphora editor shell (top bar, toolbar, canvas,
+  inspector, status bar). Path alias `@/* → src/*`, typed env in
+  `src/lib/env.ts`. Owns no editor state: it wires `Editor` + `History` +
+  `ToolSystem` + `Renderer`, persists via IndexedDB, and renders UI chrome
+  from editor snapshots.
 - **apps/backend** — Hono app assembled in `src/app.ts`, started in
   `src/server.ts`. Layers: `routes/ → controllers/ → services/`, plus
   `middleware/` (request logger), `lib/` (env), `types/` (backend-local).
@@ -87,8 +95,43 @@ into the client bundle.
   which Vite and `tsx` consume without a pre-build; `build` still emits
   `dist/` for publish readiness. A bundled backend artifact for deployment
   arrives with the first deploy phase (`start` runs `node dist/server.js`).
-- No test runner is wired yet — every workspace has a `test` placeholder so
-  `bun run test` passes through Turbo today; Vitest/Bun test lands with features.
+- Every workspace has a `test` script; engine packages run Vitest suites
+  (`bun run test` → ~119 tests). Component tests arrive with UI complexity.
 - `bun build` / `bun test` collide with Bun's built-in subcommands, so the
   `run` prefix is required for those two (`bun dev`, `bun lint`, `bun typecheck`
   work without it).
+
+## Graphora editor architecture
+
+```text
+React UI (apps/frontend: shell, toolbar, inspector, overlays)
+   │  subscribes, pulls snapshots, never owns editor state
+   ▼
+Tools (@eraser/editor-tools: select/hand/shapes, shortcuts)
+   │  gestures → commands (never direct mutation)
+   ▼
+Editor (@eraser/editor-core: document/scene/camera/selection/commands)
+   │  dispatch → History (@eraser/editor-history, injected, no cycle)
+   ▼
+Renderer (@eraser/editor-renderer: cull → sort → draw → overlays)
+   ▼
+HTML Canvas (DPR-aware, rAF-throttled, Rough.js hand-drawn style)
+```
+
+- **Document model**: `Document → pages → elements (+ metadata, assets)`,
+  plain data only, versioned (`version: 1`) with `migrateDocument` for upgrades.
+- **Elements**: discriminated union of nine kinds with a common base
+  (frame, rotation°, style, lock, z-order); point kinds store local-frame
+  geometry; behavior dispatches through `ElementRegistry`.
+- **Coordinates**: world units are truth; camera maps world↔screen;
+  cursor-anchored zoom keeps the point under the cursor fixed.
+- **Editing**: click/shift/marquee select; move/resize (Shift aspect,
+  Alt center)/rotate (Shift snaps 15°); locked elements are inert but
+  unlockable; every drag is one undo step via transactions.
+- **Clipboard**: versioned Graphora JSON, fail-safe parse, fresh ids + offset.
+- **Persistence**: `DocumentPersistence` contract; IndexedDB in the browser
+  with debounced autosave (corrupt rows are quarantined, never crash);
+  memory implementation for tests.
+- **Dependency rules**: `editor-{elements,core,history,tools,renderer} →
+editor-geometry → shared-types`; core never imports React/DOM; no cycles
+  (history/tools/renderer depend toward core, never the reverse at runtime).

@@ -3,9 +3,39 @@
  *
  * Rules:
  * - Framework-free: no React, no frontend imports. Safe for `apps/backend`.
- * - Schemas here must mirror the contracts in `@eraser/shared-types`.
+ * - Schemas here must mirror the contracts in `@eraser/shared-types`
+ *   (geometry) and the editor element/document models.
  */
 import { z } from "zod";
+
+export { boundsSchema, pointSchema, rectSchema, sizeSchema } from "./geometry.js";
+export type { BoundsInput, PointInput } from "./geometry.js";
+export {
+  arrowElementSchema,
+  arrowheadSchema,
+  diamondElementSchema,
+  elementBindingSchema,
+  elementSchema,
+  elementTypeSchema,
+  ellipseElementSchema,
+  frameElementSchema,
+  freehandElementSchema,
+  imageElementSchema,
+  lineElementSchema,
+  rectangleElementSchema,
+  strokeStyleSchema,
+  textAlignSchema,
+  textElementSchema,
+} from "./elements.js";
+export type { ElementInput, ElementTypeInput } from "./elements.js";
+export {
+  DOCUMENT_SCHEMA_VERSION,
+  assetMetadataSchema,
+  documentMetadataSchema,
+  documentSchema,
+  pageSchema,
+} from "./document.js";
+export type { DocumentInput, PageInput } from "./document.js";
 
 /** Mirrors `HealthStatus` from `@eraser/shared-types`. */
 export const healthStatusSchema = z.object({

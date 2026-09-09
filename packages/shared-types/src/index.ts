@@ -26,6 +26,9 @@ export interface ExampleEntity {
   readonly createdAt: IsoDateTimeString;
 }
 
+/** Shared 2D geometry primitives (`Point`, `Size`, `Rect`, `Bounds`). */
+export type { Bounds, Point, Rect, Size, Vector } from "./geometry.js";
+
 /** Helper used by the web smoke-test page. */
 export function isExampleEntity(value: unknown): value is ExampleEntity {
   if (typeof value !== "object" || value === null) return false;
