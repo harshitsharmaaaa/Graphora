@@ -1,0 +1,21 @@
+{
+  "name": "@eraser/config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./eslint": "./eslint/base.js",
+    "./prettier": "./prettier/base.json"
+  },
+  "files": [
+    "eslint",
+    "prettier"
+  ],
+  "scripts": {
+    "lint": "echo \"@eraser/config: nothing to lint\"",
+    "typecheck": "echo \"@eraser/config: nothing to typecheck\"",
+    "build": "echo \"@eraser/config: nothing to build\"",
+    "test": "echo \"@eraser/config: no tests yet\"",
+    "clean": "echo \"@eraser/config: nothing to clean\""
+  }
+}

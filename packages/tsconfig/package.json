@@ -1,0 +1,12 @@
+{
+  "name": "@eraser/tsconfig",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "files": [
+    "base.json",
+    "frontend.json",
+    "backend.json",
+    "library.json"
+  ]
+}

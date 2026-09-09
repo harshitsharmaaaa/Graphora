@@ -1,0 +1,10 @@
+{
+  "extends": "@eraser/tsconfig/library.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "composite": true,
+    "types": []
+  },
+  "include": ["src"]
+}

@@ -1,0 +1,14 @@
+{
+  "extends": "./packages/tsconfig/base.json",
+  "compilerOptions": {
+    "allowJs": true
+  },
+  "include": [],
+  "references": [
+    { "path": "./apps/frontend" },
+    { "path": "./apps/backend" },
+    { "path": "./packages/shared-types" },
+    { "path": "./packages/shared-validation" },
+    { "path": "./packages/ui" }
+  ]
+}

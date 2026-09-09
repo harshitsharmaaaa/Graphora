@@ -1,0 +1,10 @@
+{
+  "extends": "@eraser/tsconfig/frontend.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["src", "vite.config.ts"]
+}
