@@ -17,7 +17,7 @@ export interface Viewport {
 export interface RenderOptions {
   /** Canvas background. Defaults to white. */
   readonly background?: string;
-  /** Dot grid (infinite-canvas feel). Defaults to true. */
+  /** Optional dot grid. Disabled by default for a clean canvas. */
   readonly showGrid?: boolean;
   /** Grid spacing in world units. Defaults to 32. */
   readonly gridSpacing?: number;

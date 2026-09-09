@@ -6,7 +6,7 @@
 
 /** Near-black neutral canvas (never pure black). */
 export const DARK_CANVAS_BACKGROUND = "#111318";
-/** Subtle dot grid — visible, never overpowering. */
+/** Reserved for an explicitly opt-in grid in future workspace modes. */
 export const DARK_GRID_COLOR = "#262c38";
 /** High-contrast selection accents (visible against any shape color). */
 export const SELECTION_COLOR = "#818cf8";

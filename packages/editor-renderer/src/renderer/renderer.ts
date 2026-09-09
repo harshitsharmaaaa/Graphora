@@ -90,7 +90,7 @@ export class Renderer {
     ctx.fillStyle = options.background ?? DARK_CANVAS_BACKGROUND;
     ctx.fillRect(0, 0, state.viewport.width, state.viewport.height);
 
-    if (options.showGrid !== false) {
+    if (options.showGrid === true) {
       this.drawGrid(ctx, state);
     }
 

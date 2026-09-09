@@ -37,7 +37,7 @@ export function EditorCanvas({ app }: { readonly app: EditorApp }) {
       viewport: { ...viewportRef.current },
       selectedIds: editor.getSelection().selectedIds,
       marqueeWorld: tools.getOverlay()?.marqueeWorld,
-      options: { background: DARK_CANVAS_BACKGROUND, showGrid: true },
+      options: { background: DARK_CANVAS_BACKGROUND, showGrid: false },
     });
   }, [app]);
 
