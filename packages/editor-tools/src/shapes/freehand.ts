@@ -10,12 +10,12 @@ import type { Point } from "@eraser/shared-types";
 import { createFreehand, syncFreehandBounds } from "@eraser/editor-elements";
 import type { CursorType, PointerEventData, Tool, ToolContext } from "../tool-system/types.js";
 
-/** Minimum world-space spacing between kept points. */
-export const FREEHAND_MIN_SPACING = 2;
+/** Minimum pointer travel (screen pixels) between kept points. */
+export const FREEHAND_MIN_SPACING_PX = 2;
 
 export class FreehandTool implements Tool {
   readonly id = "freehand" as const;
-  readonly label = "Draw";
+  readonly label = "Freehand";
   readonly cursor: CursorType = "crosshair";
   private stroke: Point[] | undefined;
   private createdId: string | undefined;
@@ -33,11 +33,14 @@ export class FreehandTool implements Tool {
 
   onPointerMove(context: ToolContext, event: PointerEventData): void {
     if (this.stroke === undefined || this.createdId === undefined) return;
+    // Zoom-relative spacing: ~2 screen pixels apart at any zoom, so strokes
+    // neither explode when zoomed out nor turn jagged when zoomed in.
+    const minSpacing = FREEHAND_MIN_SPACING_PX / context.editor.getCamera().zoom;
     const last = this.stroke[this.stroke.length - 1];
     if (last !== undefined) {
       const dx = event.world.x - last.x;
       const dy = event.world.y - last.y;
-      if (Math.sqrt(dx * dx + dy * dy) < FREEHAND_MIN_SPACING) return;
+      if (Math.sqrt(dx * dx + dy * dy) < minSpacing) return;
     }
     this.stroke.push(event.world);
     const { editor } = context;
@@ -63,8 +66,15 @@ export class FreehandTool implements Tool {
   }
 
   cancelGesture(context: ToolContext): void {
+    const { editor } = context;
+    if (
+      this.createdId !== undefined &&
+      editor.getSelection().selectedIds.includes(this.createdId)
+    ) {
+      editor.clearSelection();
+    }
     this.stroke = undefined;
     this.createdId = undefined;
-    context.editor.cancelTransaction();
+    editor.cancelTransaction();
   }
 }

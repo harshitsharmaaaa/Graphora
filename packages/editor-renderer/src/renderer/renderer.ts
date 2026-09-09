@@ -21,6 +21,7 @@ import { drawRectangle } from "../elements/rectangle.js";
 import { drawText } from "../elements/text.js";
 import { drawMarqueeOverlay, drawSelectionOverlay } from "../overlay/selection.js";
 import { getVisibleElements } from "../viewport/culling.js";
+import { DARK_CANVAS_BACKGROUND, DARK_GRID_COLOR } from "../theme.js";
 import { createRoughGenerator } from "../elements/common.js";
 import type {
   DrawContext,
@@ -31,7 +32,6 @@ import type { ImageResolver, RenderState } from "./types.js";
 
 const GRID_BASE_SPACING = 32;
 const GRID_MIN_PX = 12;
-const GRID_COLOR = "#e2e8f0";
 
 export class Renderer {
   private canvas: HTMLCanvasElement | undefined;
@@ -87,7 +87,7 @@ export class Renderer {
     if (ctx === null) return;
 
     const options = state.options ?? {};
-    ctx.fillStyle = options.background ?? "#ffffff";
+    ctx.fillStyle = options.background ?? DARK_CANVAS_BACKGROUND;
     ctx.fillRect(0, 0, state.viewport.width, state.viewport.height);
 
     if (options.showGrid !== false) {
@@ -103,8 +103,17 @@ export class Renderer {
 
     const visible = getVisibleElements(state.elements, state.camera, state.viewport);
     const ordered = [...visible].sort((a, b) => a.zIndex - b.zIndex);
+    ctx.save();
+    ctx.translate(
+      state.viewport.width / 2 - state.camera.x * state.camera.zoom,
+      state.viewport.height / 2 - state.camera.y * state.camera.zoom,
+    );
+    ctx.scale(state.camera.zoom, state.camera.zoom);
     for (const element of ordered) this.drawElement(drawContext, element);
+    ctx.restore();
 
+    // Selection is drawn on this same canvas, in canvas-local CSS pixels.
+    // Its world bounds use the same registry and camera transform as elements.
     const selected = state.selectedIds ?? [];
     if (selected.length > 0) {
       const wanted = new Set(selected);
@@ -179,7 +188,7 @@ export class Renderer {
     );
     const startX = Math.floor(world.minX / spacing) * spacing;
     const startY = Math.floor(world.minY / spacing) * spacing;
-    ctx.fillStyle = GRID_COLOR;
+    ctx.fillStyle = DARK_GRID_COLOR;
     for (let gx = startX; gx <= world.maxX; gx += spacing) {
       for (let gy = startY; gy <= world.maxY; gy += spacing) {
         const screen = worldToScreen({ x: gx, y: gy }, state.camera, state.viewport);

@@ -9,7 +9,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { panCamera, zoomCameraBy } from "@eraser/editor-core";
 import { isTextEntryTarget, matchShortcutAction } from "@eraser/editor-tools";
-import { createRenderer } from "@eraser/editor-renderer";
+import { createRenderer, DARK_CANVAS_BACKGROUND } from "@eraser/editor-renderer";
 import type { Renderer, Viewport } from "@eraser/editor-renderer";
 import type { RawPointerData } from "@eraser/editor-tools";
 import type { Point } from "@eraser/shared-types";
@@ -37,7 +37,7 @@ export function EditorCanvas({ app }: { readonly app: EditorApp }) {
       viewport: { ...viewportRef.current },
       selectedIds: editor.getSelection().selectedIds,
       marqueeWorld: tools.getOverlay()?.marqueeWorld,
-      options: { background: "#ffffff", showGrid: true },
+      options: { background: DARK_CANVAS_BACKGROUND, showGrid: true },
     });
   }, [app]);
 

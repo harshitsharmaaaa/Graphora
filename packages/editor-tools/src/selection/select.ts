@@ -14,6 +14,7 @@ import {
   snapAngleDeg,
 } from "@eraser/editor-geometry";
 import type { ResizeHandleId } from "@eraser/editor-geometry";
+import { CLICK_SLOP_PX } from "../tool-system/gestures.js";
 import { defaultRegistry } from "@eraser/editor-elements";
 import type { Element } from "@eraser/editor-elements";
 import { moveElement, resizeSelectionElements, resizeSingleElement } from "@eraser/editor-core";
@@ -26,7 +27,6 @@ import type {
   ToolOverlay,
 } from "../tool-system/types.js";
 
-const CLICK_SLOP_PX = 4;
 const HIT_TOLERANCE_PX = 8;
 const SNAP_INCREMENT_DEG = 15;
 

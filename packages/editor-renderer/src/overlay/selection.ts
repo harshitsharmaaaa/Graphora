@@ -12,8 +12,9 @@ import {
 } from "@eraser/editor-geometry";
 import type { ResizeHandleId } from "@eraser/editor-geometry";
 import { RESIZE_HANDLE_IDS } from "@eraser/editor-geometry";
+import { MARQUEE_FILL, SELECTION_COLOR } from "../theme.js";
 
-export const SELECTION_COLOR = "#4f46e5";
+export { SELECTION_COLOR };
 
 export interface OverlayTheme {
   readonly selectionColor: string;
@@ -70,7 +71,7 @@ export function drawSelectionOverlay(
 /** Draw the drag marquee (screen-space rect). */
 export function drawMarqueeOverlay(ctx: CanvasRenderingContext2D, screenRect: Rect): void {
   ctx.save();
-  ctx.fillStyle = "rgba(79, 70, 229, 0.08)";
+  ctx.fillStyle = MARQUEE_FILL;
   ctx.fillRect(screenRect.x, screenRect.y, screenRect.w, screenRect.h);
   ctx.strokeStyle = SELECTION_COLOR;
   ctx.lineWidth = 1;

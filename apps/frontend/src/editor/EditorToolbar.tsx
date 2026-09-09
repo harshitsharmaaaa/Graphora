@@ -1,9 +1,12 @@
 /**
- * Minimal tool switcher. Tool order, labels, and shortcut hints come from
- * the tools package — this component only renders state owned elsewhere.
+ * Floating left vertical toolbar. Renders inside the canvas viewport as UI
+ * chrome above the canvas (never part of world coordinates). Groups:
+ * navigate (select/hand), then creation tools.
  */
 import { TOOL_ORDER, shortcutLabel } from "@eraser/editor-tools";
 import type { ToolId } from "@eraser/editor-tools";
+import { ToolIcon } from "../components/icons.js";
+import { ToolButton, ToolbarDivider } from "../components/toolbar.js";
 import { useEditorSnapshot } from "./hooks.js";
 import type { EditorApp } from "./engine.js";
 
@@ -13,58 +16,33 @@ const TOOL_LABELS: Record<ToolId, string> = {
   rectangle: "Rectangle",
   ellipse: "Ellipse",
   diamond: "Diamond",
-  arrow: "Arrow",
   line: "Line",
-  freehand: "Draw",
+  arrow: "Arrow",
+  freehand: "Freehand",
   text: "Text",
-  image: "Image",
   frame: "Frame",
+  image: "Image",
 };
 
 export function EditorToolbar({ app }: { readonly app: EditorApp }) {
   const snapshot = useEditorSnapshot(app);
   return (
-    <div className="toolbar" role="toolbar" aria-label="Editor tools">
-      {TOOL_ORDER.map((id) => {
-        const active = snapshot.activeToolId === id;
-        return (
-          <button
-            key={id}
-            type="button"
-            className={active ? "tool-button active" : "tool-button"}
-            aria-pressed={active}
-            title={`${TOOL_LABELS[id]} (${shortcutLabel(id, "other")})`}
+    <div className="toolbar toolbar-vertical" role="toolbar" aria-label="Editor tools">
+      {TOOL_ORDER.map((id) => (
+        <span key={id} className="toolbar-item">
+          {id === "rectangle" && <ToolbarDivider />}
+          <ToolButton
+            active={snapshot.activeToolId === id}
+            label={TOOL_LABELS[id]}
+            shortcut={shortcutLabel(id, "other")}
             onClick={() => {
               app.tools.setActiveTool(id);
             }}
           >
-            {TOOL_LABELS[id]}
-          </button>
-        );
-      })}
-      <span className="toolbar-divider" aria-hidden="true" />
-      <button
-        type="button"
-        className="tool-button"
-        title="Undo (Ctrl+Z)"
-        disabled={!snapshot.canUndo}
-        onClick={() => {
-          app.editor.undo();
-        }}
-      >
-        Undo
-      </button>
-      <button
-        type="button"
-        className="tool-button"
-        title="Redo (Ctrl+Shift+Z)"
-        disabled={!snapshot.canRedo}
-        onClick={() => {
-          app.editor.redo();
-        }}
-      >
-        Redo
-      </button>
+            <ToolIcon id={id} />
+          </ToolButton>
+        </span>
+      ))}
     </div>
   );
 }

@@ -506,9 +506,16 @@ export function PropertyInspector({ app }: { readonly app: EditorApp }): JSX.Ele
           <ul>
             <li>Drag a tool to create a shape</li>
             <li>Click to select, drag to move</li>
-            <li>Shift-click for multi-select</li>
+            <li>
+              <kbd>Shift</kbd>-click for multi-select
+            </li>
             <li>Drag handles to resize, top handle to rotate</li>
-            <li>Space + drag to pan · wheel to zoom</li>
+            <li>
+              <kbd>Space</kbd> + drag to pan · wheel to zoom
+            </li>
+            <li>
+              <kbd>Ctrl</kbd>+<kbd>Z</kbd> undo · <kbd>Del</kbd> delete
+            </li>
           </ul>
         </div>
       )}

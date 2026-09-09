@@ -10,3 +10,14 @@ export { drawSelectionOverlay, drawMarqueeOverlay, SELECTION_COLOR } from "./ove
 export { fontFor, measureTextBlock } from "./elements/text.js";
 export type { TextMetrics } from "./elements/text.js";
 export { dashForStrokeStyle, seedFromId } from "./elements/common.js";
+export {
+  DARK_CANVAS_BACKGROUND,
+  DARK_GRID_COLOR,
+  FRAME_BORDER,
+  FRAME_FILL,
+  FRAME_LABEL,
+  MARQUEE_FILL,
+  PLACEHOLDER_BORDER,
+  PLACEHOLDER_TEXT,
+  SELECTION_COLOR as RENDER_SELECTION_COLOR,
+} from "./theme.js";

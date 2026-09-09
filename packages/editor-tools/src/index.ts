@@ -31,6 +31,7 @@ export type {
 } from "./tool-system/types.js";
 export { ToolSystem } from "./tool-system/tool-system.js";
 export type { RawPointerData } from "./tool-system/tool-system.js";
+export { CLICK_SLOP_PX, isClickGesture } from "./tool-system/gestures.js";
 export {
   DEFAULT_SHORTCUTS,
   isTextEntryTarget,
@@ -46,7 +47,7 @@ export type {
 export { SelectTool } from "./selection/select.js";
 export { HandTool } from "./pan/hand.js";
 export { BoxCreateTool } from "./shapes/box-tools.js";
-export { FreehandTool, FREEHAND_MIN_SPACING } from "./shapes/freehand.js";
+export { FreehandTool, FREEHAND_MIN_SPACING_PX } from "./shapes/freehand.js";
 export { TextTool } from "./shapes/text.js";
 export { ImageTool, MAX_PLACED_IMAGE_SIDE } from "./shapes/image.js";
 
@@ -57,12 +58,12 @@ export const TOOL_ORDER: readonly ToolId[] = [
   "rectangle",
   "ellipse",
   "diamond",
-  "arrow",
   "line",
+  "arrow",
   "freehand",
   "text",
-  "image",
   "frame",
+  "image",
 ];
 
 /** Tool system with every built-in tool registered. */

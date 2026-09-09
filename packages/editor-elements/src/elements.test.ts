@@ -21,7 +21,7 @@ describe("factories", () => {
     const el = createRectangle({ x: 10, y: 20, width: 100, height: 50 });
     expect(el.type).toBe("rectangle");
     expect(el.id.length).toBeGreaterThan(0);
-    expect(el.strokeColor).toBe("#1e1e1e");
+    expect(el.strokeColor).toBe("#e8eaf0");
     expect(el.locked).toBe(false);
     expect(el.createdAt).toBeLessThanOrEqual(Date.now());
     expect(el.updatedAt).toBe(el.createdAt);

@@ -1,7 +1,8 @@
 /**
- * `ToolSystem` — owns the active tool, resolves screen→world coordinates,
+ * `ToolSystem` — owns the active tool, resolves canvas→world coordinates,
  * and routes pointer gestures. One instance per editor session; the canvas
- * bridge feeds it raw screen events and reads back overlay/cursor state.
+ * bridge feeds it canvas-local CSS-pixel events and reads back overlay/cursor
+ * state. Browser client coordinates never enter this package.
  */
 import { screenToWorld } from "@eraser/editor-core";
 import type { Editor, ViewportSize } from "@eraser/editor-core";
@@ -16,7 +17,7 @@ import type {
   ToolUiHooks,
 } from "./types.js";
 
-/** Screen-space pointer data as delivered by the canvas bridge. */
+/** Canvas-local CSS-pixel pointer data as delivered by the canvas bridge. */
 export interface RawPointerData {
   readonly pointerId: number;
   readonly button: number;

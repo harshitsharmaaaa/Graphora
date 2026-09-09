@@ -1,4 +1,11 @@
 import type { FrameElement, ImageElement } from "@eraser/editor-elements";
+import {
+  FRAME_BORDER,
+  FRAME_FILL,
+  FRAME_LABEL,
+  PLACEHOLDER_BORDER,
+  PLACEHOLDER_TEXT,
+} from "../theme.js";
 import { dashForStrokeStyle, inElementFrame } from "./common.js";
 import type { DrawContext } from "./common.js";
 
@@ -13,13 +20,13 @@ export function drawImage(context: DrawContext, element: ImageElement): void {
     // Unresolved asset: dashed placeholder (never blank confusion).
     ctx.beginPath();
     ctx.rect(0, 0, element.width, element.height);
-    ctx.strokeStyle = "#94a3b8";
+    ctx.strokeStyle = PLACEHOLDER_BORDER;
     ctx.lineWidth = 1.5;
     ctx.setLineDash([8, 6]);
     ctx.stroke();
     ctx.setLineDash([]);
     ctx.font = "12px Inter, system-ui, sans-serif";
-    ctx.fillStyle = "#94a3b8";
+    ctx.fillStyle = PLACEHOLDER_TEXT;
     ctx.textBaseline = "middle";
     ctx.textAlign = "center";
     ctx.fillText("Image", element.width / 2, element.height / 2);
@@ -31,15 +38,16 @@ export function drawFrame(context: DrawContext, element: FrameElement): void {
     const { ctx } = context;
     ctx.beginPath();
     ctx.rect(0, 0, element.width, element.height);
-    ctx.fillStyle = element.backgroundColor === "transparent" ? "#ffffff" : element.backgroundColor;
+    ctx.fillStyle =
+      element.backgroundColor === "transparent" ? FRAME_FILL : element.backgroundColor;
     ctx.fill();
-    ctx.strokeStyle = "#94a3b8";
+    ctx.strokeStyle = FRAME_BORDER;
     ctx.lineWidth = 1.5;
     ctx.setLineDash(dashForStrokeStyle("dashed", 1.5));
     ctx.stroke();
     ctx.setLineDash([]);
     ctx.font = "600 12px Inter, system-ui, sans-serif";
-    ctx.fillStyle = "#64748b";
+    ctx.fillStyle = FRAME_LABEL;
     ctx.textBaseline = "top";
     ctx.textAlign = "left";
     ctx.fillText(element.name, 10, 8);

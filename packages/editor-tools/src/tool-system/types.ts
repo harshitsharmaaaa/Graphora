@@ -33,7 +33,7 @@ export type CursorType =
   | "nwse-resize"
   | "nesw-resize";
 
-/** Pointer data with both screen (CSS px) and world coordinates resolved. */
+/** Pointer data with canvas-local CSS pixels and world coordinates resolved. */
 export interface PointerEventData {
   readonly pointerId: number;
   readonly button: number;
@@ -51,8 +51,12 @@ export interface PointerEventData {
  * platform-agnostic and testable without a DOM.
  */
 export interface ToolUiHooks {
-  /** Open the text editing surface for an element (`isNew` → cancel deletes). */
-  requestTextEdit(elementId: string, isNew: boolean): void;
+  /**
+   * Open the text editing surface. For existing text `anchor` is omitted
+   * (the element provides position); for new text the tool passes the
+   * click point and no element is created until commit.
+   */
+  requestTextEdit(elementId: string, isNew: boolean, anchor?: Point): void;
   /** Let the user pick an image and register it, returning its asset ref. */
   pickAndStoreImage(): Promise<
     { readonly assetId: string; readonly width: number; readonly height: number } | undefined

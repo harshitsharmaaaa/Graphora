@@ -87,4 +87,58 @@ describe("camera transforms", () => {
     expect(clampZoom(Number.NaN)).toBe(1);
     expect(resetCamera()).toEqual({ x: 0, y: 0, zoom: 1 });
   });
+
+  it("round-trips at every supported zoom with negative positions", () => {
+    const points = [
+      { x: 0, y: 0 },
+      { x: -12.5, y: 44.125 },
+      { x: 1000, y: -2000 },
+    ];
+    const cameras = [
+      { x: 0, y: 0 },
+      { x: -500.25, y: 300.75 },
+      { x: 1e6, y: -1e6 },
+    ];
+    for (const zoom of [0.1, 0.5, 1, 2, 10]) {
+      for (const center of cameras) {
+        const camera = createCamera({ ...center, zoom });
+        for (const world of points) {
+          const screen = worldToScreen(world, camera, viewport);
+          const back = screenToWorld(screen, camera, viewport);
+          expect(Math.abs(back.x - world.x)).toBeLessThan(1e-6);
+          expect(Math.abs(back.y - world.y)).toBeLessThan(1e-6);
+        }
+      }
+    }
+  });
+
+  it("round-trips both directions for the full coordinate regression matrix", () => {
+    const world = { x: -275.125, y: 430.75 };
+    const screen = { x: -120.5, y: 901.25 };
+    for (const zoom of [0.25, 0.5, 1, 2, 4, 10]) {
+      const camera = { x: -320.5, y: 180.25, zoom };
+      const projected = worldToScreen(world, camera, viewport);
+      const restoredWorld = screenToWorld(projected, camera, viewport);
+      expect(restoredWorld.x).toBeCloseTo(world.x, 10);
+      expect(restoredWorld.y).toBeCloseTo(world.y, 10);
+
+      const restoredScreen = worldToScreen(
+        screenToWorld(screen, camera, viewport),
+        camera,
+        viewport,
+      );
+      expect(restoredScreen.x).toBeCloseTo(screen.x, 10);
+      expect(restoredScreen.y).toBeCloseTo(screen.y, 10);
+    }
+  });
+
+  it("pins the cursor across extreme zoom jumps", () => {
+    const anchor = { x: 123.5, y: 477.25 };
+    const camera = createCamera({ x: -42, y: 17.5, zoom: 0.1 });
+    const world = screenToWorld(anchor, camera, viewport);
+    const zoomed = zoomCameraAt(camera, viewport, anchor, 10);
+    const pinned = worldToScreen(world, zoomed, viewport);
+    expect(Math.abs(pinned.x - anchor.x)).toBeLessThan(1e-6);
+    expect(Math.abs(pinned.y - anchor.y)).toBeLessThan(1e-6);
+  });
 });

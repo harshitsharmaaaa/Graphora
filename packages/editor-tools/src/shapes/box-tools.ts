@@ -22,8 +22,7 @@ import type {
   ToolContext,
   ToolId,
 } from "../tool-system/types.js";
-
-const CLICK_SLOP_PX = 4;
+import { isClickGesture } from "../tool-system/gestures.js";
 
 export interface BoxToolOptions {
   readonly id: Extract<ToolId, "rectangle" | "ellipse" | "diamond" | "line" | "arrow" | "frame">;
@@ -130,8 +129,7 @@ export class BoxCreateTool implements Tool {
       editor.commitTransaction();
       return;
     }
-    const slop = Math.hypot(event.point.x - downScreen.x, event.point.y - downScreen.y);
-    if (slop <= CLICK_SLOP_PX) {
+    if (isClickGesture(downScreen, event.point)) {
       // Plain click: default-sized shape centered on the click point.
       const page = getActivePage(editor.getDocument());
       const current = page.elements.find((element) => element.id === id);
@@ -164,10 +162,19 @@ export class BoxCreateTool implements Tool {
   }
 
   cancelGesture(context: ToolContext): void {
+    const { editor } = context;
+    // Roll back the in-progress creation, then drop the stale selection that
+    // pointed at the now-removed element.
+    if (
+      this.createdId !== undefined &&
+      editor.getSelection().selectedIds.includes(this.createdId)
+    ) {
+      editor.clearSelection();
+    }
     this.startWorld = undefined;
     this.createdId = undefined;
     this.downScreen = undefined;
-    context.editor.cancelTransaction();
+    editor.cancelTransaction();
   }
 }
 

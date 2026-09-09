@@ -19,6 +19,8 @@ import { createHistory } from "@eraser/editor-history";
 import { createDefaultToolSystem } from "@eraser/editor-tools";
 import type { ToolSystem, ToolUiHooks } from "@eraser/editor-tools";
 import { fontFor, measureTextBlock } from "@eraser/editor-renderer";
+import { createText } from "@eraser/editor-elements";
+import type { Point } from "@eraser/shared-types";
 import { AssetStore, pickImageFile } from "../lib/assets.js";
 import { systemClipboard } from "../lib/clipboard.js";
 import { IndexedDBPersistence } from "../lib/persistence.js";
@@ -30,6 +32,8 @@ const PASTE_OFFSET = 24;
 export interface TextEditSession {
   readonly elementId: string;
   readonly isNew: boolean;
+  /** Click point for new text (no element exists until commit). */
+  readonly anchor?: Point | undefined;
 }
 
 export function createEditorApp(options?: {
@@ -48,8 +52,8 @@ export function createEditorApp(options?: {
   };
 
   const ui: ToolUiHooks = {
-    requestTextEdit: (elementId: string, isNew: boolean) => {
-      session = { elementId, isNew };
+    requestTextEdit: (elementId: string, isNew: boolean, anchor?: Point) => {
+      session = { elementId, isNew, anchor };
       notifySession();
     },
     pickAndStoreImage: async () => {
@@ -67,15 +71,30 @@ export function createEditorApp(options?: {
 
   // -- autosave (debounced; never on every pointer move) --------------------
   let saveTimer: ReturnType<typeof setTimeout> | undefined;
-  const unsubscribeDocument = editor.subscribe((event) => {
-    if (event.type !== "document") return;
+  const scheduleSave = (): void => {
     if (saveTimer !== undefined) clearTimeout(saveTimer);
     saveTimer = setTimeout(() => {
+      saveTimer = undefined;
       persistence.save(editor.getDocument()).catch((error: unknown) => {
         console.error("Autosave failed", error);
       });
     }, AUTOSAVE_DEBOUNCE_MS);
+  };
+  const unsubscribeDocument = editor.subscribe((event) => {
+    if (event.type !== "document") return;
+    scheduleSave();
   });
+
+  /** Immediately persist (page hide/close must not lose the debounce window). */
+  function flush(): void {
+    if (saveTimer !== undefined) {
+      clearTimeout(saveTimer);
+      saveTimer = undefined;
+    }
+    persistence.save(editor.getDocument()).catch((error: unknown) => {
+      console.error("Autosave failed", error);
+    });
+  }
 
   // -- clipboard (internal buffer first, system clipboard opportunistically) -
   let clipboardBuffer = "";
@@ -141,6 +160,11 @@ export function createEditorApp(options?: {
       .map((element) => element.id);
     if (ids.length === 0) return false;
     editor.dispatch(deleteElementsCommand(ids));
+    // Drop selection references to the removed elements.
+    const surviving = new Set(
+      getActivePage(editor.getDocument()).elements.map((element) => element.id),
+    );
+    editor.setSelection(editor.getSelection().selectedIds.filter((id) => surviving.has(id)));
     return true;
   }
 
@@ -158,32 +182,37 @@ export function createEditorApp(options?: {
 
   function commitTextEdit(elementId: string, text: string): void {
     if (session?.elementId !== elementId) return;
+    const anchor = session.anchor;
+    const isNew = session.isNew;
     session = undefined;
     notifySession();
-    const element = getActivePage(editor.getDocument()).elements.find(
-      (candidate) => candidate.id === elementId,
-    );
-    if (element?.type !== "text") return;
-    if (text === "") {
-      editor.dispatch(deleteElementsCommand([elementId], "Edit text"));
+    const page = getActivePage(editor.getDocument());
+    const existing = page.elements.find((candidate) => candidate.id === elementId);
+    if (existing !== undefined) {
+      if (existing.type !== "text") return;
+      if (text === "") {
+        editor.dispatch(deleteElementsCommand([elementId], "Edit text"));
+        return;
+      }
+      const size = measureText(text, existing);
+      editor.dispatch(updateTextCommand(elementId, text, size));
       return;
     }
-    const size = measureText(text, element);
-    editor.dispatch(updateTextCommand(elementId, text, size));
+    // New text: nothing was created until now, so commit is a single entry
+    // and cancelling leaves no trace.
+    if (!isNew || text === "") return;
+    const origin = anchor ?? { x: 0, y: 0 };
+    const draft = createText({ x: origin.x, y: origin.y, width: 0, height: 0, text });
+    const size = measureText(text, draft);
+    const element = { ...draft, width: size.width, height: size.height };
+    editor.dispatch(createElementsCommand([element], "Create text"));
+    editor.setSelection([element.id]);
   }
 
   function cancelTextEdit(): void {
     if (session === undefined) return;
-    const { elementId, isNew } = session;
     session = undefined;
     notifySession();
-    if (!isNew) return;
-    const element = getActivePage(editor.getDocument()).elements.find(
-      (candidate) => candidate.id === elementId,
-    );
-    if (element?.type === "text" && element.text === "") {
-      editor.dispatch(deleteElementsCommand([elementId], "Edit text"));
-    }
   }
 
   let measureContext: CanvasRenderingContext2D | undefined;
@@ -225,6 +254,7 @@ export function createEditorApp(options?: {
     persistence,
     documentId,
     load,
+    flush,
     dispose,
     copySelected,
     paste,

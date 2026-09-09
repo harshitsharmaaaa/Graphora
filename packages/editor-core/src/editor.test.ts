@@ -200,7 +200,7 @@ describe("editor integration", () => {
     editor.dispatch(changeStyleCommand([id], { strokeColor: "#ff0000", strokeWidth: 5 }));
     expect(onlyElement(editor).strokeColor).toBe("#ff0000");
     editor.undo();
-    expect(onlyElement(editor).strokeColor).toBe("#1e1e1e");
+    expect(onlyElement(editor).strokeColor).toBe("#e8eaf0");
   });
 
   it("tracks selection and emits events", () => {
@@ -233,6 +233,54 @@ describe("editor integration", () => {
     const v0 = editor.getVersion();
     editor.dispatch(createElementsCommand([createRectangle({ width: 1, height: 1 })]));
     expect(editor.getVersion()).toBeGreaterThan(v0);
+  });
+
+  it("undoes and redoes resize, rotate, and style as single steps", () => {
+    const { editor } = setup();
+    editor.dispatch(
+      createElementsCommand([createRectangle({ x: 0, y: 0, width: 100, height: 50 })]),
+    );
+    const id = onlyElement(editor).id;
+    editor.dispatch(
+      replaceElementsCommand(
+        [
+          resizeSingleElement(onlyElement(editor), {
+            handle: "right",
+            deltaWorld: { x: 50, y: 0 },
+          }),
+        ],
+        "Resize",
+      ),
+    );
+    expect(onlyElement(editor).width).toBe(150);
+    editor.undo();
+    expect(onlyElement(editor).width).toBe(100);
+    editor.redo();
+    expect(onlyElement(editor).width).toBe(150);
+
+    const center = { x: 75, y: 25 };
+    editor.dispatch(
+      replaceElementsCommand(rotateElementsAbout([onlyElement(editor)], center, 90), "Rotate"),
+    );
+    expect(onlyElement(editor).rotation).toBe(90);
+    editor.undo();
+    expect(onlyElement(editor).rotation).toBe(0);
+
+    editor.dispatch(changeStyleCommand([id], { backgroundColor: "#ff0000" }));
+    editor.undo();
+    expect(onlyElement(editor).backgroundColor).toBe("transparent");
+  });
+
+  it("leaves no history behind a cancelled transaction", () => {
+    const { editor } = setup();
+    editor.dispatch(createElementsCommand([createRectangle({ width: 1, height: 1 })]));
+    editor.beginTransaction("Move");
+    editor.dispatch(replaceElementsCommand([moveElement(onlyElement(editor), 50, 50)], "Move"));
+    editor.cancelTransaction();
+    expect(onlyElement(editor).x).toBe(0);
+    editor.undo(); // only the creation remains
+    expect(getActivePage(editor.getDocument()).elements).toHaveLength(0);
+    expect(editor.canUndo()).toBe(false);
   });
 });
 
