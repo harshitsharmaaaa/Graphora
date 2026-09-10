@@ -14,16 +14,18 @@ import {
   updateTextCommand,
 } from "@eraser/editor-core";
 import type { Document, DocumentPersistence, Editor as EditorType } from "@eraser/editor-core";
+import type { Element } from "@eraser/editor-elements";
 import { createEmptyDocument } from "@eraser/editor-core";
 import { createHistory } from "@eraser/editor-history";
 import { createDefaultToolSystem } from "@eraser/editor-tools";
 import type { ToolSystem, ToolUiHooks } from "@eraser/editor-tools";
 import { fontFor, measureTextBlock } from "@eraser/editor-renderer";
-import { createText } from "@eraser/editor-elements";
+import { createArrow, createRectangle, createText } from "@eraser/editor-elements";
 import type { Point } from "@eraser/shared-types";
 import { AssetStore, pickImageFile } from "../lib/assets.js";
 import { systemClipboard } from "../lib/clipboard.js";
 import { IndexedDBPersistence } from "../lib/persistence.js";
+import { env } from "../lib/env.js";
 
 export const DEFAULT_DOCUMENT_ID = "graphora-local";
 const AUTOSAVE_DEBOUNCE_MS = 800;
@@ -153,6 +155,70 @@ export function createEditorApp(options?: {
     return true;
   }
 
+  async function generateDiagram(prompt: string): Promise<boolean> {
+    const response = await fetch(`${env.apiUrl}/ai/generate`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ prompt, kind: "auto" }),
+    });
+    if (!response.ok) throw new Error("Diagram generation failed");
+    const payload = (await response.json()) as {
+      readonly diagram?: {
+        readonly nodes: readonly { readonly id: string; readonly label: string; readonly type: string }[];
+        readonly edges: readonly { readonly source: string; readonly target: string }[];
+      };
+    };
+    if (payload.diagram === undefined) throw new Error("Invalid diagram response");
+    const positions = new Map<string, { readonly x: number; readonly y: number }>();
+    const elements: Element[] = payload.diagram.nodes.flatMap((node, index) => {
+      const x = 80 + (index % 3) * 260;
+      const y = 80 + Math.floor(index / 3) * 180;
+      positions.set(node.id, { x, y });
+      const box = createRectangle({
+        x,
+        y,
+        width: 190,
+        height: 90,
+        backgroundColor: node.type === "database" ? "#312e81" : "#1e293b",
+        fillStyle: "solid",
+        roundness: 0.15,
+        zIndex: index * 2,
+      });
+      const text = createText({
+        x: x + 12,
+        y: y + 30,
+        width: 166,
+        height: 30,
+        text: node.label,
+        strokeColor: "#e8eaf0",
+        zIndex: index * 2 + 1,
+      });
+      return [box, text];
+    });
+    for (const edge of payload.diagram.edges) {
+      const source = positions.get(edge.source);
+      const target = positions.get(edge.target);
+      if (source === undefined || target === undefined) continue;
+      elements.push(
+        createArrow({
+          x: source.x,
+          y: source.y,
+          width: target.x - source.x,
+          height: target.y - source.y,
+          points: [{ x: 95, y: 45 }, { x: target.x - source.x + 95, y: target.y - source.y + 45 }],
+          endArrowhead: "triangle",
+          strokeColor: "#a5b4fc",
+          strokeWidth: 2,
+          zIndex: 0,
+        }),
+      );
+    }
+    if (elements.length === 0) return false;
+    editor.dispatch(createElementsCommand(elements, "Generate diagram"));
+    editor.setSelection(elements.map((element) => element.id));
+    return true;
+  }
+
   function deleteSelected(): boolean {
     const document = editor.getDocument();
     const ids = selectedElements(document)
@@ -260,6 +326,7 @@ export function createEditorApp(options?: {
     paste,
     pasteFromSystemClipboard,
     duplicateSelected,
+    generateDiagram,
     deleteSelected,
     getTextEditSession,
     onTextEditSession,

@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { cors } from "hono/cors";
 import { requestLogger } from "./middleware/logger.js";
 import { routes } from "./routes/index.js";
 
@@ -10,6 +11,7 @@ import { routes } from "./routes/index.js";
 export function createApp() {
   const app = new Hono();
 
+  app.use("*", cors());
   app.use(requestLogger);
 
   app.notFound((c) => c.json({ error: "Not Found" }, 404));

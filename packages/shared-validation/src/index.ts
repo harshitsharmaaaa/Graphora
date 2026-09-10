@@ -36,6 +36,8 @@ export {
   pageSchema,
 } from "./document.js";
 export type { DocumentInput, PageInput } from "./document.js";
+export { aiDiagramSchema, aiEdgeSchema, aiGenerateRequestSchema, aiNodeSchema } from "./ai.js";
+export type { AiDiagram } from "./ai.js";
 
 /** Mirrors `HealthStatus` from `@eraser/shared-types`. */
 export const healthStatusSchema = z.object({

@@ -20,9 +20,11 @@ import type { EditorApp } from "./engine.js";
 export function EditorCanvas({
   app,
   onContextMenu,
+  readOnly = false,
 }: {
   readonly app: EditorApp;
-  readonly   onContextMenu?: (event: MouseEvent<HTMLCanvasElement>) => void;
+  readonly onContextMenu?: (event: MouseEvent<HTMLCanvasElement>) => void;
+  readonly readOnly?: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -106,6 +108,7 @@ export function EditorCanvas({
   // Keyboard shortcuts (window-level so the canvas needs no tabIndex hacks).
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent): void => {
+      if (readOnly) return;
       if (app.getTextEditSession() !== undefined) {
         if (event.key === "Escape") app.cancelTextEdit();
         return;
@@ -182,6 +185,7 @@ export function EditorCanvas({
             return;
           }
           e.currentTarget.setPointerCapture(e.pointerId);
+          if (readOnly) return;
           app.tools.handlePointerDown(toRaw(e, point));
           render();
         }}
@@ -200,7 +204,7 @@ export function EditorCanvas({
             updateCursor(point);
             return;
           }
-          app.tools.handlePointerMove(toRaw(e, point));
+          if (!readOnly) app.tools.handlePointerMove(toRaw(e, point));
           if (e.buttons !== 0) render();
           else updateCursor(point);
         }}
@@ -210,16 +214,16 @@ export function EditorCanvas({
             updateCursor(toLocal(e.clientX, e.clientY));
             return;
           }
-          app.tools.handlePointerUp(toRaw(e, toLocal(e.clientX, e.clientY)));
+          if (!readOnly) app.tools.handlePointerUp(toRaw(e, toLocal(e.clientX, e.clientY)));
           render();
         }}
         onPointerCancel={(e) => {
           spacePanRef.current = undefined;
-          app.tools.handlePointerCancel(toRaw(e, toLocal(e.clientX, e.clientY)));
+          if (!readOnly) app.tools.handlePointerCancel(toRaw(e, toLocal(e.clientX, e.clientY)));
           render();
         }}
         onDoubleClick={(e) => {
-          app.tools.handleDoubleClick(toRaw(e, toLocal(e.clientX, e.clientY)));
+          if (!readOnly) app.tools.handleDoubleClick(toRaw(e, toLocal(e.clientX, e.clientY)));
           render();
         }}
       />
