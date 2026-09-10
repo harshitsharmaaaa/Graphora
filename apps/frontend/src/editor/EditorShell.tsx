@@ -2,8 +2,8 @@
  * Editor shell: top bar, viewport (canvas + floating toolbar + overlays),
  * inspector, status bar. Pure layout over editor state.
  */
-import { useState } from "react";
-import { serializeDocument } from "@eraser/editor-core";
+import { useEffect, useState } from "react";
+import { serializeDocument, setLockedCommand } from "@eraser/editor-core";
 import { systemClipboard } from "../lib/clipboard.js";
 import { EditorCanvas } from "./EditorCanvas.js";
 import { EditorToolbar } from "./EditorToolbar.js";
@@ -16,7 +16,22 @@ import type { EditorApp } from "./engine.js";
 export function EditorShell({ app }: { readonly app: EditorApp }) {
   const snapshot = useEditorSnapshot(app);
   const [shareNote, setShareNote] = useState("");
+  const [menu, setMenu] = useState<{ readonly x: number; readonly y: number } | undefined>();
   const document = app.editor.getDocument();
+  const selectedCount = snapshot.selectedIds.length;
+  const selectedElement = selectedCount === 1
+    ? document.pages.flatMap((page) => page.elements).find((element) => element.id === snapshot.selectedIds[0])
+    : undefined;
+
+  useEffect(() => {
+    const close = (): void => {
+      setMenu(undefined);
+    };
+    window.addEventListener("pointerdown", close);
+    return () => {
+      window.removeEventListener("pointerdown", close);
+    };
+  }, []);
 
   const share = (): void => {
     const clipboard = systemClipboard();
@@ -77,9 +92,50 @@ export function EditorShell({ app }: { readonly app: EditorApp }) {
       </header>
       <div className="editor-main">
         <div className="canvas-wrap">
-          <EditorCanvas app={app} />
           <EditorToolbar app={app} />
+          <div className="canvas-stage">
+            <EditorCanvas
+              app={app}
+              onContextMenu={(event) => {
+                setMenu({ x: event.clientX, y: event.clientY });
+              }}
+            />
+          </div>
           <TextOverlay app={app} />
+          {menu !== undefined && (
+            <div
+              className="context-menu"
+              style={{ left: menu.x, top: menu.y }}
+              role="menu"
+              onPointerDown={(event) => {
+                event.stopPropagation();
+              }}
+            >
+              {selectedCount === 0 && (
+                <button type="button" onClick={() => { void app.pasteFromSystemClipboard(); setMenu(undefined); }}>
+                  Paste
+                </button>
+              )}
+              {selectedCount > 0 && (
+                <>
+                  <button type="button" onClick={() => { app.copySelected(); setMenu(undefined); }}>Copy</button>
+                  <button type="button" onClick={() => { app.duplicateSelected(); setMenu(undefined); }}>Duplicate</button>
+                  <button type="button" onClick={() => { app.deleteSelected(); setMenu(undefined); }}>Delete</button>
+                  {selectedElement !== undefined && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        app.editor.dispatch(setLockedCommand([selectedElement.id], !selectedElement.locked));
+                        setMenu(undefined);
+                      }}
+                    >
+                      {selectedElement.locked ? "Unlock" : "Lock"}
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          )}
         </div>
         <PropertyInspector app={app} />
       </div>

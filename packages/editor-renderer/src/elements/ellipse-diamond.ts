@@ -7,12 +7,12 @@ export function drawEllipse(context: DrawContext, element: EllipseElement): void
     const { ctx, roughCanvas, generator } = context;
     const { width: w, height: h, roughness } = element;
     if (roughness > 0) {
-      const { stroke, strokeWidth, fill, seed, strokeLineDash } = roughStyleFor(element);
+      const { stroke, strokeWidth, fill, fillStyle, seed, strokeLineDash } = roughStyleFor(element);
       roughCanvas.draw(
         generator.ellipse(w / 2, h / 2, Math.max(0, w), Math.max(0, h), {
           stroke,
           strokeWidth,
-          ...(fill === undefined ? {} : { fill, fillStyle: "solid" as const }),
+          ...(fill === undefined ? {} : { fill, ...(fillStyle === undefined ? {} : { fillStyle }) }),
           roughness,
           seed,
           ...(strokeLineDash === undefined ? {} : { strokeLineDash: [...strokeLineDash] }),
@@ -37,14 +37,14 @@ export function drawDiamond(context: DrawContext, element: DiamondElement): void
       { x: 0, y: h / 2 },
     ];
     if (roughness > 0) {
-      const { stroke, strokeWidth, fill, seed, strokeLineDash } = roughStyleFor(element);
+      const { stroke, strokeWidth, fill, fillStyle, seed, strokeLineDash } = roughStyleFor(element);
       roughCanvas.draw(
         generator.polygon(
           points.map((p) => [p.x, p.y]),
           {
             stroke,
             strokeWidth,
-            ...(fill === undefined ? {} : { fill, fillStyle: "solid" as const }),
+            ...(fill === undefined ? {} : { fill, ...(fillStyle === undefined ? {} : { fillStyle }) }),
             roughness,
             seed,
             ...(strokeLineDash === undefined ? {} : { strokeLineDash: [...strokeLineDash] }),

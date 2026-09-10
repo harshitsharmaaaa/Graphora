@@ -6,7 +6,7 @@
 import rough from "roughjs";
 import type { Point } from "@eraser/shared-types";
 import { degToRad } from "@eraser/editor-geometry";
-import type { BaseElement, StrokeStyle } from "@eraser/editor-elements";
+import type { BaseElement, FillStyle, StrokeStyle } from "@eraser/editor-elements";
 import type { ImageResolver } from "../renderer/types.js";
 
 export type RoughCanvasInstance = ReturnType<typeof rough.canvas>;
@@ -50,6 +50,7 @@ export interface RoughStyle {
   readonly stroke: string;
   readonly strokeWidth: number;
   readonly fill?: string | undefined;
+  readonly fillStyle?: "solid" | "hachure" | "cross-hatch";
   readonly roughness: number;
   readonly seed: number;
   readonly strokeLineDash?: readonly number[] | undefined;
@@ -61,10 +62,14 @@ export function roughStyleFor(element: BaseElement): RoughStyle {
   return {
     stroke: element.strokeColor,
     strokeWidth: Math.max(0.5, element.strokeWidth),
-    fill: element.backgroundColor === "transparent" ? undefined : element.backgroundColor,
+    fill:
+      element.fillStyle === "none" || element.backgroundColor === "transparent"
+        ? undefined
+        : element.backgroundColor,
     roughness: element.roughness,
     seed: seedFromId(element.id),
     ...(dash.length === 0 ? {} : { strokeLineDash: dash }),
+    ...(element.fillStyle === "none" ? {} : { fillStyle: element.fillStyle }),
   };
 }
 
@@ -95,9 +100,40 @@ export function fillAndStroke(
 ): void {
   ctx.beginPath();
   fillPath();
-  if (element.backgroundColor !== "transparent") {
-    ctx.fillStyle = element.backgroundColor;
+  if (element.fillStyle !== "none" && element.backgroundColor !== "transparent") {
+    ctx.fillStyle = createFillStyle(ctx, element.fillStyle, element.backgroundColor);
     ctx.fill();
+  }
+
+  function createFillStyle(
+    ctx: CanvasRenderingContext2D,
+    style: FillStyle,
+    color: string,
+  ): string | CanvasPattern {
+    if (style === "solid") return color;
+    const tile = document.createElement("canvas");
+    tile.width = 16;
+    tile.height = 16;
+    const tileContext = tile.getContext("2d");
+    if (tileContext === null) return color;
+    tileContext.strokeStyle = color;
+    tileContext.lineWidth = 1;
+    tileContext.globalAlpha = 0.7;
+    tileContext.beginPath();
+    if (style === "hachure" || style === "cross-hatch") {
+      tileContext.moveTo(-2, 14);
+      tileContext.lineTo(14, -2);
+      tileContext.moveTo(6, 18);
+      tileContext.lineTo(18, 6);
+    }
+    if (style === "cross-hatch") {
+      tileContext.moveTo(-2, 2);
+      tileContext.lineTo(14, 18);
+      tileContext.moveTo(6, -2);
+      tileContext.lineTo(18, 10);
+    }
+    tileContext.stroke();
+    return ctx.createPattern(tile, "repeat") ?? color;
   }
   if (element.strokeWidth > 0) {
     ctx.strokeStyle = element.strokeColor;

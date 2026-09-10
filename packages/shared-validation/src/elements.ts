@@ -31,6 +31,7 @@ export const elementTypeSchema = z.enum([
 ]);
 
 export const strokeStyleSchema = z.enum(["solid", "dashed", "dotted"]);
+export const fillStyleSchema = z.enum(["none", "solid", "hachure", "cross-hatch"]);
 
 export const arrowheadSchema = z.enum(["none", "triangle"]);
 
@@ -52,6 +53,7 @@ const baseElementFields = {
   opacity: z.number().min(0).max(1),
   strokeColor: colorString,
   backgroundColor: colorString,
+  fillStyle: fillStyleSchema.default("none"),
   strokeWidth: z.number().min(0).max(100),
   strokeStyle: strokeStyleSchema,
   roughness: z.number().min(0).max(2),

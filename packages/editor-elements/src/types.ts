@@ -19,6 +19,7 @@ export type ElementType =
   "rectangle" | "ellipse" | "diamond" | "line" | "arrow" | "freehand" | "text" | "image" | "frame";
 
 export type StrokeStyle = "solid" | "dashed" | "dotted";
+export type FillStyle = "none" | "solid" | "hachure" | "cross-hatch";
 
 export type ArrowheadKind = "none" | "triangle";
 
@@ -52,6 +53,7 @@ export interface BaseElement {
   readonly strokeColor: string;
   /** `"transparent"` for no fill. */
   readonly backgroundColor: string;
+  readonly fillStyle: FillStyle;
 
   readonly strokeWidth: number;
   readonly strokeStyle: StrokeStyle;
@@ -148,6 +150,7 @@ export type ElementOf<T extends ElementType> = Extract<Element, { readonly type:
 export interface ElementStyle {
   readonly strokeColor: string;
   readonly backgroundColor: string;
+  readonly fillStyle: FillStyle;
   readonly strokeWidth: number;
   readonly strokeStyle: StrokeStyle;
   readonly opacity: number;

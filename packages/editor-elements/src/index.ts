@@ -21,6 +21,7 @@ export type {
   LineElement,
   RectangleElement,
   StrokeStyle,
+  FillStyle,
   TextAlign,
   TextElement,
 } from "./types.js";

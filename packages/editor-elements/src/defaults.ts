@@ -1,9 +1,10 @@
 /** Shared defaults: one place defines "a fresh element looks like this". */
-import type { ElementStyle, StrokeStyle, TextAlign } from "./types.js";
+import type { ElementStyle, FillStyle, StrokeStyle, TextAlign } from "./types.js";
 
 /** Neutral light stroke — readable against the dark canvas by default. */
 export const DEFAULT_STROKE_COLOR = "#e8eaf0";
 export const DEFAULT_BACKGROUND_COLOR = "transparent";
+export const DEFAULT_FILL_STYLE: FillStyle = "none";
 export const DEFAULT_STROKE_WIDTH = 2;
 export const DEFAULT_STROKE_STYLE: StrokeStyle = "solid";
 export const DEFAULT_OPACITY = 1;
@@ -23,6 +24,7 @@ export function getDefaultStyle(): ElementStyle {
   return {
     strokeColor: DEFAULT_STROKE_COLOR,
     backgroundColor: DEFAULT_BACKGROUND_COLOR,
+    fillStyle: DEFAULT_FILL_STYLE,
     strokeWidth: DEFAULT_STROKE_WIDTH,
     strokeStyle: DEFAULT_STROKE_STYLE,
     opacity: DEFAULT_OPACITY,

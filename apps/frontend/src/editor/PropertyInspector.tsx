@@ -183,12 +183,29 @@ function StyleControls({
         }}
       />
       <div className="inspector-row">
-        <span>Fill off</span>
+        <span>Fill pattern</span>
+        <select
+          value={sample.fillStyle}
+          onChange={(e) => {
+            const style = e.target.value;
+            if (style === "none" || style === "solid" || style === "hachure" || style === "cross-hatch") {
+              apply({ fillStyle: style, backgroundColor: style === "none" ? "transparent" : sample.backgroundColor === "transparent" ? "#818cf8" : sample.backgroundColor });
+            }
+          }}
+        >
+          <option value="none">None</option>
+          <option value="solid">Solid</option>
+          <option value="hachure">Hachure</option>
+          <option value="cross-hatch">Cross-hatch</option>
+        </select>
+      </div>
+      <div className="inspector-row">
+        <span>Fill state</span>
         <button
           type="button"
           className="mini-button"
           onClick={() => {
-            apply({ backgroundColor: "transparent" });
+            apply({ backgroundColor: "transparent", fillStyle: "none" });
           }}
         >
           Transparent
@@ -455,6 +472,28 @@ function SingleInspector({
               ))}
             </span>
           </div>
+        </section>
+      )}
+      {element.type === "arrow" && (
+        <section>
+          <h3>Arrow</h3>
+          {(["startArrowhead", "endArrowhead"] as const).map((side) => (
+            <label className="inspector-row" key={side}>
+              <span>{side === "startArrowhead" ? "Start" : "End"}</span>
+              <select
+                value={element[side]}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === "none" || value === "triangle") {
+                    replace({ ...element, [side]: value, updatedAt: Date.now() }, "Arrowhead");
+                  }
+                }}
+              >
+                <option value="none">None</option>
+                <option value="triangle">Triangle</option>
+              </select>
+            </label>
+          ))}
         </section>
       )}
       {element.type === "image" && (

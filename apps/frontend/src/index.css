@@ -116,7 +116,13 @@ button {
   position: relative;
   flex: 1;
   min-width: 0;
+  min-height: 0;
   background: var(--canvas-background);
+}
+
+.canvas-stage {
+  position: absolute;
+  inset: 48px 0 0;
 }
 
 .editor-canvas-container {
@@ -130,38 +136,36 @@ button {
   outline: none;
 }
 
-/* --- floating left toolbar --------------------------------------------- */
+/* --- top toolbar ------------------------------------------------------- */
 
-.toolbar-vertical {
+.toolbar-horizontal {
   position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
+  inset: 0 0 auto;
   z-index: 20;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 2px;
-  padding: 6px;
+  gap: 4px;
+  min-height: 48px;
+  padding: 6px 10px;
   background: var(--surface-elevated);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-width: 0 0 1px;
   box-shadow: var(--shadow);
   pointer-events: auto;
-  max-height: calc(100% - 24px);
-  overflow-y: auto;
+  overflow-x: auto;
   scrollbar-width: thin;
 }
 
 .toolbar-item {
-  display: contents;
+  display: inline-flex;
+  align-items: center;
 }
 
 .toolbar-divider {
-  width: 22px;
-  height: 1px;
+  width: 1px;
+  height: 26px;
   background: var(--border-strong);
-  margin: 5px 0;
+  margin: 0 4px;
 }
 
 .tool-button {
@@ -169,8 +173,10 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
+  min-width: 42px;
   height: 36px;
+  gap: 7px;
+  padding: 0 9px;
   border: 1px solid transparent;
   border-radius: 8px;
   background: transparent;
@@ -196,7 +202,13 @@ button {
   background: var(--surface-active);
   border-color: var(--accent);
   color: var(--accent-strong);
-  box-shadow: inset 2px 0 0 var(--accent);
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+.tool-button-label {
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .tool-button:disabled {
@@ -209,12 +221,12 @@ button {
 }
 
 /* Tooltip: label + shortcut, right of the toolbar, no delay bloat. */
-.tool-button::after {
+.toolbar-horizontal .tool-button::after {
   content: attr(data-tip);
   position: absolute;
-  left: calc(100% + 10px);
-  top: 50%;
-  transform: translateY(-50%) translateX(-4px);
+  left: 50%;
+  top: calc(100% + 10px);
+  transform: translateX(-50%) translateY(-4px);
   white-space: nowrap;
   font-size: 12px;
   font-weight: 600;
@@ -233,10 +245,10 @@ button {
   z-index: 30;
 }
 
-.tool-button:hover::after,
-.tool-button:focus-visible::after {
+.toolbar-horizontal .tool-button:hover::after,
+.toolbar-horizontal .tool-button:focus-visible::after {
   opacity: 1;
-  transform: translateY(-50%) translateX(0);
+  transform: translateX(-50%) translateY(0);
 }
 
 /* --- inspector --------------------------------------------------------- */
@@ -412,6 +424,34 @@ button {
   color: var(--danger);
 }
 
+.context-menu {
+  position: fixed;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  min-width: 150px;
+  padding: 5px;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+}
+
+.context-menu button {
+  border: 0;
+  border-radius: 4px;
+  padding: 7px 10px;
+  background: transparent;
+  color: var(--text-secondary);
+  text-align: left;
+  cursor: pointer;
+}
+
+.context-menu button:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
 .button-row {
   display: flex;
   gap: 4px;
@@ -514,12 +554,13 @@ button {
 /* --- scrollbars -------------------------------------------------------- */
 
 .inspector::-webkit-scrollbar,
-.toolbar-vertical::-webkit-scrollbar {
+.toolbar-horizontal::-webkit-scrollbar {
   width: 8px;
+  height: 8px;
 }
 
 .inspector::-webkit-scrollbar-thumb,
-.toolbar-vertical::-webkit-scrollbar-thumb {
+.toolbar-horizontal::-webkit-scrollbar-thumb {
   background: var(--border-strong);
   border-radius: 4px;
 }
@@ -527,6 +568,15 @@ button {
 /* --- responsive floor -------------------------------------------------- */
 
 @media (max-width: 900px) {
+  .tool-button-label {
+    display: none;
+  }
+
+  .tool-button {
+    min-width: 36px;
+    padding: 0 8px;
+  }
+
   .inspector {
     width: 220px;
   }

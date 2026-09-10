@@ -7,12 +7,12 @@ export function drawRectangle(context: DrawContext, element: RectangleElement): 
     const { ctx, roughCanvas, generator } = context;
     const { width: w, height: h, roughness, roundness } = element;
     if (roughness > 0) {
-      const { stroke, strokeWidth, fill, seed, strokeLineDash } = roughStyleFor(element);
+      const { stroke, strokeWidth, fill, fillStyle, seed, strokeLineDash } = roughStyleFor(element);
       roughCanvas.draw(
         generator.rectangle(0, 0, Math.max(0, w), Math.max(0, h), {
           stroke,
           strokeWidth,
-          ...(fill === undefined ? {} : { fill, fillStyle: "solid" as const }),
+          ...(fill === undefined ? {} : { fill, ...(fillStyle === undefined ? {} : { fillStyle }) }),
           roughness,
           seed,
           ...(strokeLineDash === undefined ? {} : { strokeLineDash: [...strokeLineDash] }),

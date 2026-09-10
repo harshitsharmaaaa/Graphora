@@ -33,6 +33,7 @@ export function ToolButton({
       onClick={onClick}
     >
       {children}
+      <span className="tool-button-label">{label}</span>
     </button>
   );
 }

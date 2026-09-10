@@ -1,8 +1,4 @@
-/**
- * Floating left vertical toolbar. Renders inside the canvas viewport as UI
- * chrome above the canvas (never part of world coordinates). Groups:
- * navigate (select/hand), then creation tools.
- */
+/** Top toolbar rendered as UI chrome above the canvas, outside world coordinates. */
 import { TOOL_ORDER, shortcutLabel } from "@eraser/editor-tools";
 import type { ToolId } from "@eraser/editor-tools";
 import { ToolIcon } from "../components/icons.js";
@@ -27,7 +23,7 @@ const TOOL_LABELS: Record<ToolId, string> = {
 export function EditorToolbar({ app }: { readonly app: EditorApp }) {
   const snapshot = useEditorSnapshot(app);
   return (
-    <div className="toolbar toolbar-vertical" role="toolbar" aria-label="Editor tools">
+    <div className="toolbar toolbar-horizontal" role="toolbar" aria-label="Editor tools">
       {TOOL_ORDER.map((id) => (
         <span key={id} className="toolbar-item">
           {id === "rectangle" && <ToolbarDivider />}

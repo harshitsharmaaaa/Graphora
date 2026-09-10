@@ -16,6 +16,7 @@ import type {
   LineElement,
   RectangleElement,
   StrokeStyle,
+  FillStyle,
   TextAlign,
   TextElement,
 } from "./types.js";
@@ -41,6 +42,7 @@ export interface CreateBaseInput {
   readonly opacity?: number;
   readonly strokeColor?: string;
   readonly backgroundColor?: string;
+  readonly fillStyle?: FillStyle;
   readonly strokeWidth?: number;
   readonly strokeStyle?: StrokeStyle;
   readonly roughness?: number;
@@ -66,6 +68,7 @@ function base(input: CreateBaseInput): BaseFields {
     opacity: input.opacity ?? style.opacity,
     strokeColor: input.strokeColor ?? style.strokeColor,
     backgroundColor: input.backgroundColor ?? style.backgroundColor,
+    fillStyle: input.fillStyle ?? style.fillStyle,
     strokeWidth: input.strokeWidth ?? style.strokeWidth,
     strokeStyle: input.strokeStyle ?? style.strokeStyle,
     roughness: input.roughness ?? style.roughness,

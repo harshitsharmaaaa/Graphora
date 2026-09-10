@@ -7,6 +7,7 @@
  * - Space+drag pans regardless of the active tool.
  */
 import { useCallback, useEffect, useRef } from "react";
+import type { MouseEvent } from "react";
 import { panCamera, zoomCameraBy } from "@eraser/editor-core";
 import { isTextEntryTarget, matchShortcutAction } from "@eraser/editor-tools";
 import { createRenderer, DARK_CANVAS_BACKGROUND } from "@eraser/editor-renderer";
@@ -16,7 +17,13 @@ import type { Point } from "@eraser/shared-types";
 import { handleEditorAction } from "./actions.js";
 import type { EditorApp } from "./engine.js";
 
-export function EditorCanvas({ app }: { readonly app: EditorApp }) {
+export function EditorCanvas({
+  app,
+  onContextMenu,
+}: {
+  readonly app: EditorApp;
+  readonly   onContextMenu?: (event: MouseEvent<HTMLCanvasElement>) => void;
+}) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const rendererRef = useRef<Renderer | null>(null);
@@ -163,6 +170,7 @@ export function EditorCanvas({ app }: { readonly app: EditorApp }) {
         className="editor-canvas"
         onContextMenu={(e) => {
           e.preventDefault();
+          onContextMenu?.(e);
         }}
         onPointerDown={(e) => {
           e.currentTarget.focus();

@@ -45,6 +45,22 @@ export function migrateDocument(data: unknown): unknown {
   // missing newer optional sections still validate.
   const migrated: Record<string, unknown> = { ...data, version };
   if (migrated.assets === undefined) migrated.assets = {};
+  const pages = migrated.pages;
+  if (Array.isArray(pages)) {
+    migrated.pages = pages.map((page) => {
+      if (!isRecord(page) || !Array.isArray(page.elements)) return page;
+      return {
+        ...page,
+        elements: page.elements.map((element) => {
+          if (!isRecord(element) || element.fillStyle !== undefined) return element;
+          return {
+            ...element,
+            fillStyle: element.backgroundColor === "transparent" ? "none" : "solid",
+          };
+        }),
+      };
+    });
+  }
   return migrated;
 }
 
