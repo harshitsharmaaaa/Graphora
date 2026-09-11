@@ -15,17 +15,21 @@
   "dependencies": {
     "@better-auth/prisma-adapter": "^1.7.4",
     "@eraser/database": "workspace:*",
+    "@eraser/editor-core": "workspace:*",
     "@eraser/shared-types": "workspace:*",
     "@eraser/shared-validation": "workspace:*",
+    "@eraser/realtime": "workspace:*",
     "@hono/node-server": "^1.14.0",
     "@prisma/client": "^6.16.2",
     "better-auth": "^1.7.4",
-    "hono": "^4.7.0"
+    "hono": "^4.7.0",
+    "ws": "^8.18.0"
   },
   "devDependencies": {
     "@eraser/config": "workspace:*",
     "@eraser/tsconfig": "workspace:*",
     "@types/node": "^22.15.0",
+    "@types/ws": "^8.5.13",
     "eslint": "^9.28.0",
     "globals": "^16.2.0",
     "tsx": "^4.20.0",

@@ -28,6 +28,7 @@ function readPort(): number {
 export const env = {
   port: readPort(),
   host: readEnv("SERVER_HOST", "0.0.0.0"),
+  websocketPath: readEnv("SERVER_WEBSOCKET_PATH", "/ws/collaboration"),
   corsOrigins: readEnv("SERVER_CORS_ORIGINS", "http://localhost:5173")
     .split(",")
     .map((origin) => origin.trim())

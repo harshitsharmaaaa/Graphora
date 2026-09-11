@@ -1,11 +1,20 @@
 import { serve } from "@hono/node-server";
+import type { IncomingMessage } from "node:http";
+import type { Duplex } from "node:stream";
+import type { Server } from "node:http";
+import { WebSocketServer } from "ws";
 import { createApp } from "./app.js";
 import { env } from "./lib/env.js";
+import { createDocumentRepository } from "@eraser/database";
+import { createRealtimeGateway } from "./realtime.js";
 
 /** Process entry point — the only module with side effects on import. */
 const app = createApp();
+const repository = createDocumentRepository(env.databaseUrl);
+const gateway = createRealtimeGateway(repository);
+const websocketServer = new WebSocketServer({ noServer: true, maxPayload: 8 * 1024 * 1024 });
 
-serve(
+const server = serve(
   {
     fetch: app.fetch,
     port: env.port,
@@ -17,3 +26,20 @@ serve(
     console.log(`API listening on http://${info.address}:${String(info.port)}`);
   },
 );
+
+const httpServer = server as Server;
+httpServer.on("upgrade", (request: IncomingMessage, socket: Duplex, head: Buffer) => {
+  const pathname = new URL(request.url ?? "/", `http://${request.headers.host ?? "localhost"}`).pathname;
+  const origin = request.headers.origin;
+  if (pathname !== env.websocketPath || (origin !== undefined && !env.corsOrigins.includes(origin))) {
+    socket.destroy();
+    return;
+  }
+  websocketServer.handleUpgrade(request, socket, head, (websocket) => {
+    websocketServer.emit("connection", websocket, request);
+  });
+});
+
+websocketServer.on("connection", (socket, request) => {
+  gateway.handle(socket, request);
+});

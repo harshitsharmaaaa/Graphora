@@ -19,6 +19,7 @@
     "@eraser/editor-history": "workspace:*",
     "@eraser/editor-renderer": "workspace:*",
     "@eraser/editor-tools": "workspace:*",
+    "@eraser/realtime": "workspace:*",
     "@eraser/shared-types": "workspace:*",
     "@eraser/shared-validation": "workspace:*",
     "@eraser/ui": "workspace:*",

@@ -2,7 +2,7 @@ export type DocumentPermissionRole = "owner" | "editor" | "viewer";
 
 export interface DocumentAccess {
   readonly ownerId?: string | null;
-  readonly members?: ReadonlyArray<{ readonly userId: string; readonly role: DocumentPermissionRole }>;
+  readonly members?: readonly { readonly userId: string; readonly role: string }[];
 }
 
 export class AuthorizationService {

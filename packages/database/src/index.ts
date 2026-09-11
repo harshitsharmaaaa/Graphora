@@ -11,6 +11,10 @@ export interface DocumentRecord {
   readonly updatedAt: string;
 }
 
+export interface DocumentAccessRecord extends DocumentRecord {
+  readonly members: readonly { readonly userId: string; readonly role: string }[];
+}
+
 export interface ShareRecord {
   readonly token: string;
   readonly documentId: string;
@@ -35,6 +39,7 @@ export type SaveDocumentResult =
 export interface DocumentRepository {
   healthCheck(): Promise<void>;
   getDocument(id: string): Promise<DocumentRecord | undefined>;
+  getDocumentAccess(id: string): Promise<DocumentAccessRecord | undefined>;
   listDocuments(userId?: string): Promise<DocumentRecord[]>;
   saveDocument(input: SaveDocumentInput): Promise<SaveDocumentResult>;
   deleteDocument(id: string): Promise<boolean>;
@@ -70,10 +75,16 @@ export function createMemoryDocumentRepository(): DocumentRepository {
   const shares = new Map<string, ShareRecord>();
 
   return {
-    async healthCheck() {},
+    async healthCheck() {
+      await Promise.resolve();
+    },
     async getDocument(id) {
       const document = documents.get(id);
       return document === undefined ? undefined : clone(document);
+    },
+    async getDocumentAccess(id) {
+      const document = documents.get(id);
+      return document === undefined ? undefined : { ...clone(document), members: [] };
     },
     async listDocuments(userId) {
       const items: DocumentRecord[] = [];
@@ -138,6 +149,13 @@ export function createPrismaDocumentRepository(prisma = new PrismaClient()): Doc
       const row = await prisma.document.findUnique({ where: { id } });
       return row === null ? undefined : toRecord(row);
     },
+    async getDocumentAccess(id) {
+      const row = await prisma.document.findUnique({
+        where: { id },
+        include: { members: { select: { userId: true, role: true } } },
+      });
+      return row === null ? undefined : { ...toRecord(row), members: row.members };
+    },
     async listDocuments(userId) {
       if (userId === undefined) return [];
       const rows = await prisma.document.findMany({ where: { ownerId: userId } });
@@ -145,14 +163,14 @@ export function createPrismaDocumentRepository(prisma = new PrismaClient()): Doc
     },
     async saveDocument(input) {
       const current = await prisma.document.findUnique({ where: { id: input.id } });
+      const creating = current === null;
       const matches = current === null ||
         (input.expectedRevision === undefined || current.revision === input.expectedRevision) &&
         (input.expectedUpdatedAt === undefined || current.updatedAt.toISOString() === input.expectedUpdatedAt);
       if (!matches) {
-        if (current === null) throw new Error("Unexpected conflict state when current document is missing");
         return { status: "conflict", document: toRecord(current) };
       }
-      const row = current === null
+      const row = creating
         ? await prisma.document.create({ data: { id: input.id, ownerId: input.ownerId ?? null, data: input.data as never } as never })
         : await prisma.document.update({
           where: { id: input.id },
