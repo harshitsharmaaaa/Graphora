@@ -7,6 +7,7 @@ import { elementSchema } from "./elements.js";
 
 /** Current on-disk schema version. Must match `DOCUMENT_VERSION` in core. */
 export const DOCUMENT_SCHEMA_VERSION = 1 as const;
+export const DOCUMENT_MAX_BYTES = 5 * 1024 * 1024;
 
 const nonEmptyString = z.string().min(1).max(4096);
 
@@ -42,3 +43,21 @@ export const documentSchema = z.object({
 
 export type DocumentInput = z.infer<typeof documentSchema>;
 export type PageInput = z.infer<typeof pageSchema>;
+
+export function documentSizeBytes(value: unknown): number {
+  return new TextEncoder().encode(JSON.stringify(value)).byteLength;
+}
+
+export function validateDocumentPayload(value: unknown): {
+  readonly success: true;
+  readonly data: DocumentInput;
+} | {
+  readonly success: false;
+  readonly error: "invalid" | "too_large";
+} {
+  const parsed = documentSchema.safeParse(value);
+  if (!parsed.success) return { success: false, error: "invalid" };
+  return documentSizeBytes(parsed.data) > DOCUMENT_MAX_BYTES
+    ? { success: false, error: "too_large" }
+    : { success: true, data: parsed.data };
+}

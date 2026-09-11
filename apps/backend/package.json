@@ -13,9 +13,13 @@
     "clean": "rm -rf dist *.tsbuildinfo"
   },
   "dependencies": {
+    "@better-auth/prisma-adapter": "^1.7.4",
+    "@eraser/database": "workspace:*",
     "@eraser/shared-types": "workspace:*",
     "@eraser/shared-validation": "workspace:*",
     "@hono/node-server": "^1.14.0",
+    "@prisma/client": "^6.16.2",
+    "better-auth": "^1.7.4",
     "hono": "^4.7.0"
   },
   "devDependencies": {

@@ -23,4 +23,10 @@ export const aiGenerateRequestSchema = z.object({
   kind: z.enum(["auto", "flowchart", "architecture", "sequence", "erd", "freeform"]).default("auto"),
 });
 
+export const aiEditRequestSchema = z.object({
+  prompt: z.string().min(1).max(4000),
+  diagram: aiDiagramSchema,
+});
+
 export type AiDiagram = z.infer<typeof aiDiagramSchema>;
+export type AiEditRequest = z.infer<typeof aiEditRequestSchema>;

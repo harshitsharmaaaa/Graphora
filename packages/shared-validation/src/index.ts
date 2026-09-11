@@ -30,14 +30,17 @@ export {
 export type { ElementInput, ElementTypeInput } from "./elements.js";
 export {
   DOCUMENT_SCHEMA_VERSION,
+  DOCUMENT_MAX_BYTES,
   assetMetadataSchema,
   documentMetadataSchema,
   documentSchema,
+  documentSizeBytes,
   pageSchema,
+  validateDocumentPayload,
 } from "./document.js";
 export type { DocumentInput, PageInput } from "./document.js";
-export { aiDiagramSchema, aiEdgeSchema, aiGenerateRequestSchema, aiNodeSchema } from "./ai.js";
-export type { AiDiagram } from "./ai.js";
+export { aiDiagramSchema, aiEdgeSchema, aiEditRequestSchema, aiGenerateRequestSchema, aiNodeSchema } from "./ai.js";
+export type { AiDiagram, AiEditRequest } from "./ai.js";
 
 /** Mirrors `HealthStatus` from `@eraser/shared-types`. */
 export const healthStatusSchema = z.object({
