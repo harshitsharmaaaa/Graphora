@@ -55,7 +55,11 @@ function writeAsset(asset: Document["assets"][string]): Y.Map<unknown> {
 }
 
 /** Replace the canonical Graphora root in a Y.Doc without touching camera/editor state. */
-export function documentToYDoc(document: Document, yDoc: Y.Doc = new Y.Doc()): Y.Doc {
+export function documentToYDoc(
+  document: Document,
+  yDoc: Y.Doc = new Y.Doc(),
+  origin?: unknown,
+): Y.Doc {
   const root = yDoc.getMap<unknown>(ROOT_KEY);
   yDoc.transact(() => {
     root.clear();
@@ -75,13 +79,15 @@ export function documentToYDoc(document: Document, yDoc: Y.Doc = new Y.Doc()): Y
     }
     root.set("assets", assets);
     root.set("metadata", writeMetadata(document.metadata));
-  });
+  }, origin);
   return yDoc;
 }
 
 function readPage(value: unknown): unknown {
   const page = mapFor(value);
-  const elements = arrayFor(page.get("elements")).toArray().map((element) => structuredClone(element));
+  const elements = arrayFor(page.get("elements"))
+    .toArray()
+    .map((element) => structuredClone(element));
   return {
     id: stringFor(page.get("id"), "page.id"),
     name: stringFor(page.get("name"), "page.name"),
@@ -94,9 +100,15 @@ function readAsset(value: unknown): unknown {
   return {
     id: stringFor(asset.get("id"), "asset.id"),
     mimeType: stringFor(asset.get("mimeType"), "asset.mimeType"),
-    ...(asset.get("byteSize") === undefined ? {} : { byteSize: numberFor(asset.get("byteSize"), "asset.byteSize") }),
-    ...(asset.get("width") === undefined ? {} : { width: numberFor(asset.get("width"), "asset.width") }),
-    ...(asset.get("height") === undefined ? {} : { height: numberFor(asset.get("height"), "asset.height") }),
+    ...(asset.get("byteSize") === undefined
+      ? {}
+      : { byteSize: numberFor(asset.get("byteSize"), "asset.byteSize") }),
+    ...(asset.get("width") === undefined
+      ? {}
+      : { width: numberFor(asset.get("width"), "asset.width") }),
+    ...(asset.get("height") === undefined
+      ? {}
+      : { height: numberFor(asset.get("height"), "asset.height") }),
   };
 }
 
@@ -121,7 +133,9 @@ export function yDocToDocument(yDoc: Y.Doc): Document {
     metadata: {
       createdAt: numberFor(metadata.get("createdAt"), "metadata.createdAt"),
       updatedAt: numberFor(metadata.get("updatedAt"), "metadata.updatedAt"),
-      ...(metadata.get("appVersion") === undefined ? {} : { appVersion: stringFor(metadata.get("appVersion"), "metadata.appVersion") }),
+      ...(metadata.get("appVersion") === undefined
+        ? {}
+        : { appVersion: stringFor(metadata.get("appVersion"), "metadata.appVersion") }),
     },
   });
 }

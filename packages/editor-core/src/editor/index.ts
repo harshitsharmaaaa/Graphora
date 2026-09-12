@@ -22,7 +22,7 @@ import {
 import { createEmptyDocument } from "../document/seed.js";
 import type { Document, Page } from "../document/types.js";
 import { EventEmitter } from "../events/index.js";
-import type { EditorEvent, EditorListener } from "../events/index.js";
+import type { EditorEvent, EditorListener, EditorMutationOrigin } from "../events/index.js";
 import type { HistoryEntry, HistoryStore } from "../history/types.js";
 import { Scene } from "../scene/index.js";
 import { Selection } from "../selection/index.js";
@@ -33,6 +33,15 @@ export interface EditorOptions {
   readonly history: HistoryStore;
   readonly registry?: ElementRegistry;
   readonly camera?: Partial<CameraState>;
+}
+
+export interface DocumentLoadOptions {
+  readonly origin?: EditorMutationOrigin;
+  readonly preserveHistory?: boolean;
+}
+
+export interface DispatchOptions {
+  readonly origin?: "local" | "history";
 }
 
 export class Editor {
@@ -111,19 +120,32 @@ export class Editor {
   // -- document -------------------------------------------------------------
 
   /** Replace the whole document (load from storage). Clears history. */
-  loadDocument(document: Document): void {
+  loadDocument(document: Document, options: DocumentLoadOptions = {}): void {
     this.document = document;
     this.selection.clear();
-    this.history.clear();
+    if (!options.preserveHistory) this.history.clear();
     this.cancelTransactionSilently();
     this.version += 1;
-    this.emit({ type: "document", version: this.version });
+    const origin = options.origin ?? "load";
+    this.emit({ type: "document", version: this.version, origin });
     this.emit({ type: "selection", version: this.version });
     this.emit({ type: "history", version: this.version });
   }
 
+  /** Apply a collaboration snapshot without adding it to this user's history. */
+  applyRemoteDocument(document: Document): void {
+    const selectedIds = this.selection.snapshot().selectedIds;
+    this.loadDocument(document, { origin: "remote", preserveHistory: true });
+    const ids = new Set(
+      document.pages.flatMap((page) => page.elements.map((element) => element.id)),
+    );
+    if (this.selection.set(selectedIds.filter((id) => ids.has(id)))) {
+      this.emit({ type: "selection", version: this.version });
+    }
+  }
+
   /** Execute a command, recording exactly one history entry (or merging). */
-  dispatch(command: EditorCommand): void {
+  dispatch(command: EditorCommand, options: DispatchOptions = {}): void {
     const context = this.createContext();
     command.execute(context);
     this.recordEntry({
@@ -135,7 +157,7 @@ export class Editor {
         command.undo(this.createContext());
       },
     });
-    this.afterDocumentMutation();
+    this.afterDocumentMutation(options.origin ?? "local");
   }
 
   undo(): void {
@@ -143,7 +165,7 @@ export class Editor {
     const entry = this.history.popUndo();
     if (entry === undefined) return;
     entry.undo();
-    this.afterDocumentMutation();
+    this.afterDocumentMutation("history");
   }
 
   redo(): void {
@@ -151,7 +173,7 @@ export class Editor {
     const entry = this.history.popRedo();
     if (entry === undefined) return;
     entry.redo();
-    this.afterDocumentMutation();
+    this.afterDocumentMutation("history");
   }
 
   // -- transactions (one drag gesture = one undo step) ----------------------
@@ -195,7 +217,7 @@ export class Editor {
       if (entry !== undefined) entry.undo();
     }
     this.cancelTransactionSilently();
-    this.afterDocumentMutation();
+    this.afterDocumentMutation("local");
   }
 
   // -- internals ------------------------------------------------------------
@@ -215,13 +237,13 @@ export class Editor {
     this.emit({ type: "history", version: this.version });
   }
 
-  private afterDocumentMutation(): void {
+  private afterDocumentMutation(origin: EditorMutationOrigin): void {
     this.document = {
       ...this.document,
       metadata: { ...this.document.metadata, updatedAt: Date.now() },
     };
     this.version += 1;
-    this.emit({ type: "document", version: this.version });
+    this.emit({ type: "document", version: this.version, origin });
     if (this.transactionDepth === 0) this.emit({ type: "history", version: this.version });
   }
 

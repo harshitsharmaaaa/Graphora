@@ -16,6 +16,12 @@ function readOptionalEnv(name: string): string | undefined {
   return value === undefined || value === "" ? undefined : value;
 }
 
+function readLimit(name: string, fallback: number): number {
+  const value = Number.parseInt(readEnv(name, String(fallback)), 10);
+  if (!Number.isFinite(value) || value <= 0) throw new Error(`Invalid ${name}`);
+  return value;
+}
+
 function readPort(): number {
   const raw = readEnv("SERVER_PORT", "3001");
   const parsed = Number.parseInt(raw, 10);
@@ -40,9 +46,20 @@ export const env = {
   googleClientId: readOptionalEnv("GOOGLE_CLIENT_ID"),
   googleClientSecret: readOptionalEnv("GOOGLE_CLIENT_SECRET"),
   aiProvider: readEnv("AI_PROVIDER", "openai"),
-  aiApiKey: readOptionalEnv("GEMINI_API_KEY") ?? readOptionalEnv("AI_API_KEY") ?? readOptionalEnv("OPENAI_API_KEY"),
+  aiApiKey:
+    readOptionalEnv("GEMINI_API_KEY") ??
+    readOptionalEnv("AI_API_KEY") ??
+    readOptionalEnv("OPENAI_API_KEY"),
   aiModel: readEnv("AI_MODEL", "gemini-2.5-flash"),
   aiBaseUrl: readEnv("AI_BASE_URL", "https://api.openai.com/v1"),
+  realtimeSnapshotDebounceMs: readLimit("SERVER_REALTIME_SNAPSHOT_DEBOUNCE_MS", 750),
+  realtimeIdleRoomMs: readLimit("SERVER_REALTIME_IDLE_ROOM_MS", 60_000),
+  realtimeMaxClientsPerRoom: readLimit("SERVER_REALTIME_MAX_CLIENTS_PER_ROOM", 100),
+  realtimeMaxUsersPerRoom: readLimit("SERVER_REALTIME_MAX_USERS_PER_ROOM", 100),
+  realtimeMaxRooms: readLimit("SERVER_REALTIME_MAX_ROOMS", 1_000),
+  realtimeMaxConnections: readLimit("SERVER_REALTIME_MAX_CONNECTIONS", 2_000),
+  realtimeMaxAwarenessEntries: readLimit("SERVER_REALTIME_MAX_AWARENESS_ENTRIES", 100),
+  realtimeMaxUpdateBytes: readLimit("SERVER_REALTIME_MAX_UPDATE_BYTES", 5 * 1024 * 1024),
 } as const;
 
 export type Env = typeof env;

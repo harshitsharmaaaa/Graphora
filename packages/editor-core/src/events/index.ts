@@ -7,10 +7,14 @@
 
 export type EditorEventType = "document" | "selection" | "camera" | "history";
 
+export type EditorMutationOrigin = "local" | "remote" | "history" | "load";
+
 export interface EditorEvent {
   readonly type: EditorEventType;
   /** Monotonic counter bumped on every mutation (per editor instance). */
   readonly version: number;
+  /** Identifies whether a document change came from this user or collaboration. */
+  readonly origin?: EditorMutationOrigin;
 }
 
 export type EditorListener = (event: EditorEvent) => void;

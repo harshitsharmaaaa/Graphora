@@ -88,3 +88,62 @@ const ICONS: Record<ToolId, JSX.Element> = {
 export function ToolIcon({ id }: { readonly id: ToolId }) {
   return ICONS[id];
 }
+
+type ChromeIconName =
+  "undo" | "redo" | "share" | "spark" | "check" | "cloud" | "chevron" | "lock" | "close" | "search";
+
+const CHROME_PATHS: Record<ChromeIconName, JSX.Element> = {
+  undo: <path d="M9 7 4 12l5 5M5 12h8a6 6 0 0 1 6 6" />,
+  redo: <path d="m15 7 5 5-5 5M19 12h-8a6 6 0 0 0-6 6" />,
+  share: (
+    <>
+      <circle cx="18" cy="5" r="2.5" />
+      <circle cx="6" cy="12" r="2.5" />
+      <circle cx="18" cy="19" r="2.5" />
+      <path d="m8.2 10.8 7.6-4.6M8.2 13.2l7.6 4.6" />
+    </>
+  ),
+  spark: (
+    <path d="m12 3 1.4 5.6L19 10l-5.6 1.4L12 17l-1.4-5.6L5 10l5.6-1.4zM19 16l.6 2.4L22 19l-2.4.6L19 22l-.6-2.4L16 19l2.4-.6z" />
+  ),
+  check: <path d="m5 12 4 4L19 6" />,
+  cloud: <path d="M7.5 18.5h9a4 4 0 0 0 .7-7.9A5.5 5.5 0 0 0 6.6 9.2 4.8 4.8 0 0 0 7.5 18.5Z" />,
+  chevron: <path d="m8 10 4 4 4-4" />,
+  lock: (
+    <>
+      <rect x="5" y="10" width="14" height="10" rx="2" />
+      <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+    </>
+  ),
+  close: <path d="m6 6 12 12M18 6 6 18" />,
+  search: (
+    <>
+      <circle cx="10.5" cy="10.5" r="5.5" />
+      <path d="m15 15 4.5 4.5" />
+    </>
+  ),
+};
+
+export function ChromeIcon({
+  name,
+  size = 16,
+}: {
+  readonly name: ChromeIconName;
+  readonly size?: number;
+}) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {CHROME_PATHS[name]}
+    </svg>
+  );
+}

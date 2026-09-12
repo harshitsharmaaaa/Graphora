@@ -9,6 +9,7 @@ import {
   parseClientMessage,
   RealtimeRoomManager,
   type RoomClient,
+  type RealtimeRoomOptions,
 } from "@eraser/realtime";
 
 function requestHeaders(request: IncomingMessage): Headers {
@@ -31,93 +32,121 @@ function roleFor(value: string): "owner" | "editor" | "viewer" | undefined {
   return value === "owner" || value === "editor" || value === "viewer" ? value : undefined;
 }
 
-export function createRealtimeGateway(repository: DocumentRepository) {
+export function createRealtimeGateway(
+  repository: DocumentRepository,
+  limits?: RealtimeRoomOptions,
+) {
   const rooms = new RealtimeRoomManager(async (documentId, document) => {
     await repository.saveDocument({ id: documentId, data: document });
-  });
+  }, limits);
 
   function handle(socket: WebSocket, request: IncomingMessage): void {
     let roomId: string | undefined;
     let clientId: string | undefined;
+    let userId: string | undefined;
     let joined = false;
     let client: RoomClient | undefined;
     const handshakeTimer = setTimeout(() => {
       if (!joined) socket.close(1008, "Collaboration handshake timed out");
     }, 10_000);
 
-    const fail = (code: "invalid_message" | "unauthorized" | "forbidden" | "not_found" | "server_error", message: string): void => {
+    const fail = (
+      code: "invalid_message" | "unauthorized" | "forbidden" | "not_found" | "server_error",
+      message: string,
+    ): void => {
       socket.send(encodeMessage({ type: "error", code, message }));
       socket.close(1008, message);
     };
 
     socket.on("message", (raw) => {
       void (async () => {
-      const payload = rawMessage(raw);
-      if (payload === undefined) {
-        fail("invalid_message", "Invalid collaboration message");
-        return;
-      }
-      const message = parseClientMessage(payload);
-      if (message === undefined) {
-        fail("invalid_message", "Invalid collaboration message");
-        return;
-      }
-      if (!joined) {
-        if (message.type !== "hello") {
-          fail("invalid_message", "The first message must be hello");
+        const payload = rawMessage(raw);
+        if (payload === undefined) {
+          fail("invalid_message", "Invalid collaboration message");
           return;
         }
-        const session = await auth.api.getSession({ headers: requestHeaders(request), asResponse: false });
-        const user = session?.user;
-        if (user === undefined) {
-          fail("unauthorized", "A signed-in session is required");
+        const message = parseClientMessage(payload);
+        if (message === undefined) {
+          fail("invalid_message", "Invalid collaboration message");
           return;
         }
-        const access = await repository.getDocumentAccess(message.documentId);
-        if (access === undefined) {
-          fail("not_found", "Document not found");
+        if (!joined) {
+          if (message.type !== "hello") {
+            fail("invalid_message", "The first message must be hello");
+            return;
+          }
+          const session = await auth.api.getSession({
+            headers: requestHeaders(request),
+            asResponse: false,
+          });
+          const user = session?.user;
+          if (user === undefined) {
+            fail("unauthorized", "A signed-in session is required");
+            return;
+          }
+          const access = await repository.getDocumentAccess(message.documentId);
+          if (access === undefined) {
+            fail("not_found", "Document not found");
+            return;
+          }
+          const member = access.members.find((candidate) => candidate.userId === user.id);
+          const role = access.ownerId === user.id ? "owner" : roleFor(member?.role ?? "");
+          if (role === undefined || !authorizationService.canView(access, user.id)) {
+            fail("forbidden", "You do not have access to this document");
+            return;
+          }
+          roomId = message.documentId;
+          clientId = message.clientId;
+          userId = user.id;
+          client = {
+            clientId,
+            userId: user.id,
+            name: user.name,
+            role,
+            send: (payload) => {
+              if (socket.readyState === socket.OPEN) socket.send(payload);
+            },
+            close: (code, reason) => {
+              socket.close(code, reason);
+            },
+          };
+          const record = await repository.getDocument(message.documentId);
+          if (record === undefined) {
+            fail("not_found", "Document not found");
+            return;
+          }
+          try {
+            rooms.join(parseDocument(record.data), client);
+          } catch {
+            fail("server_error", "Stored document is invalid");
+            return;
+          }
+          joined = true;
+          clearTimeout(handshakeTimer);
           return;
         }
-        const member = access.members.find((candidate) => candidate.userId === user.id);
-        const role = access.ownerId === user.id ? "owner" : roleFor(member?.role ?? "");
-        if (role === undefined || !authorizationService.canView(access, user.id)) {
-          fail("forbidden", "You do not have access to this document");
+        if (message.type === "hello") {
+          fail("invalid_message", "A collaboration session can only send one hello");
           return;
         }
-        roomId = message.documentId;
-        clientId = message.clientId;
-        client = {
-          clientId,
-          userId: user.id,
-          name: user.name,
-          role,
-          send: (payload) => {
-            if (socket.readyState === socket.OPEN) socket.send(payload);
-          },
-          close: (code, reason) => {
-            socket.close(code, reason);
-          },
-        };
-        const record = await repository.getDocument(message.documentId);
-        if (record === undefined) {
-          fail("not_found", "Document not found");
-          return;
+        if (client !== undefined && roomId !== undefined && userId !== undefined) {
+          const access = await repository.getDocumentAccess(roomId);
+          const member = access?.members.find((candidate) => candidate.userId === userId);
+          const currentRole = access?.ownerId === userId ? "owner" : roleFor(member?.role ?? "");
+          if (access === undefined) {
+            fail("not_found", "Document not found");
+            return;
+          }
+          if (currentRole === undefined || !authorizationService.canView(access, userId)) {
+            fail("forbidden", "Your document access has changed");
+            return;
+          }
+          if (currentRole !== client.role) {
+            fail("forbidden", "Your collaboration permissions have changed");
+            return;
+          }
+          rooms.receive(client, roomId, message);
         }
-        try {
-          rooms.join(parseDocument(record.data), client);
-        } catch {
-          fail("server_error", "Stored document is invalid");
-          return;
-        }
-        joined = true;
-        clearTimeout(handshakeTimer);
-        return;
-      }
-      if (message.type === "hello") {
-        fail("invalid_message", "A collaboration session can only send one hello");
-        return;
-      }
-      if (client !== undefined && roomId !== undefined) rooms.receive(client, roomId, message);
       })().catch(() => {
         fail("server_error", "Collaboration request failed");
       });

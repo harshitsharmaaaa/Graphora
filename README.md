@@ -1,10 +1,11 @@
-# Eraser — Collaborative Whiteboard (Monorepo Foundation)
+# Eraser — Graphora Collaborative Whiteboard
 
 Production-grade TypeScript monorepo foundation for a collaborative
 diagramming/whiteboard app (Excalidraw / Eraser.io inspired).
 
-> **Scope:** foundation and architecture only. No editor, canvas, auth,
-> database, realtime, or AI yet — those land in later phases.
+The editor uses a central Editor↔Yjs adapter. Durable commands, local
+history undo/redo, AI-created elements, reconnects, and offline edits are
+mirrored through Yjs; camera and selection remain local UI state.
 
 ## Stack
 
@@ -132,6 +133,9 @@ HTML Canvas (DPR-aware, rAF-throttled, Rough.js hand-drawn style)
 - **Persistence**: `DocumentPersistence` contract; IndexedDB in the browser
   with debounced autosave (corrupt rows are quarantined, never crash);
   memory implementation for tests.
+- **Collaboration**: Yjs rooms persist debounced snapshots, flush on empty-room
+  cleanup and process shutdown, enforce room/user/message/awareness limits,
+  and use `y-indexeddb` for browser offline persistence.
 - **Dependency rules**: `editor-{elements,core,history,tools,renderer} →
 editor-geometry → shared-types`; core never imports React/DOM; no cycles
   (history/tools/renderer depend toward core, never the reverse at runtime).

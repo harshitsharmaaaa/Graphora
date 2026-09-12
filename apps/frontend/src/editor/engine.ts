@@ -26,6 +26,7 @@ import { AssetStore, pickImageFile } from "../lib/assets.js";
 import { systemClipboard } from "../lib/clipboard.js";
 import { IndexedDBPersistence } from "../lib/persistence.js";
 import { env } from "../lib/env.js";
+import { CollaborativeEditorAdapter, createCollaborationClient } from "../lib/realtime.js";
 
 export const DEFAULT_DOCUMENT_ID = "graphora-local";
 const AUTOSAVE_DEBOUNCE_MS = 800;
@@ -45,6 +46,12 @@ export function createEditorApp(options?: {
   const documentId = options?.documentId ?? DEFAULT_DOCUMENT_ID;
   const persistence = options?.persistence ?? new IndexedDBPersistence();
   const editor: EditorType = createEditor({ history: createHistory({ limit: 100 }) });
+  const clientId =
+    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID()
+      : `client-${Math.random().toString(36).slice(2)}`;
+  const collaboration = createCollaborationClient(documentId, clientId, true);
+  const collaborationAdapter = new CollaborativeEditorAdapter(editor, collaboration);
   const assets = new AssetStore();
 
   let session: TextEditSession | undefined;
@@ -164,7 +171,11 @@ export function createEditorApp(options?: {
     if (!response.ok) throw new Error("Diagram generation failed");
     const payload = (await response.json()) as {
       readonly diagram?: {
-        readonly nodes: readonly { readonly id: string; readonly label: string; readonly type: string }[];
+        readonly nodes: readonly {
+          readonly id: string;
+          readonly label: string;
+          readonly type: string;
+        }[];
         readonly edges: readonly { readonly source: string; readonly target: string }[];
       };
     };
@@ -205,7 +216,10 @@ export function createEditorApp(options?: {
           y: source.y,
           width: target.x - source.x,
           height: target.y - source.y,
-          points: [{ x: 95, y: 45 }, { x: target.x - source.x + 95, y: target.y - source.y + 45 }],
+          points: [
+            { x: 95, y: 45 },
+            { x: target.x - source.x + 95, y: target.y - source.y + 45 },
+          ],
           endArrowhead: "triangle",
           strokeColor: "#a5b4fc",
           strokeWidth: 2,
@@ -304,6 +318,7 @@ export function createEditorApp(options?: {
     // Force our well-known id so every install shares one local board.
     const document = stored ?? createEmptyDocument("Untitled board");
     editor.loadDocument(document.id === documentId ? document : { ...document, id: documentId });
+    if (typeof WebSocket !== "undefined") collaboration.connect();
   }
 
   function dispose(): void {
@@ -311,6 +326,8 @@ export function createEditorApp(options?: {
     unsubscribeDocument();
     sessionListeners.clear();
     assets.dispose();
+    collaborationAdapter.dispose();
+    void collaboration.destroy();
   }
 
   return {
@@ -333,6 +350,7 @@ export function createEditorApp(options?: {
     commitTextEdit,
     cancelTextEdit,
     measureText,
+    collaboration,
   };
 }
 

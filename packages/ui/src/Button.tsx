@@ -2,30 +2,41 @@ import type { ButtonHTMLAttributes, ReactNode } from "react";
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   readonly children: ReactNode;
-  readonly variant?: "primary" | "secondary";
+  readonly variant?: "primary" | "secondary" | "quiet" | "danger";
+  readonly size?: "compact" | "regular";
 }
 
-/**
- * Minimal shared button. Deliberately unstyled-framework-free (plain CSS
- * classes defined in `button.css`-in-JS below via inline styles would be
- * overkill) — just enough to prove `@eraser/ui` resolves from `apps/frontend`.
- * A real design system lands in a later phase.
- */
-export function Button({ children, variant = "primary", type, ...rest }: ButtonProps) {
-  const background = variant === "primary" ? "#4f46e5" : "#e5e7eb";
-  const color = variant === "primary" ? "#ffffff" : "#111827";
+/** Shared button primitive for surfaces outside the editor shell. */
+export function Button({
+  children,
+  variant = "primary",
+  size = "regular",
+  type,
+  style,
+  ...rest
+}: ButtonProps) {
+  const palette = {
+    primary: { background: "#30465e", border: "#617d9e", color: "#d7e7ff" },
+    secondary: { background: "#181c23", border: "#35404d", color: "#e8edf3" },
+    quiet: { background: "transparent", border: "transparent", color: "#a2adba" },
+    danger: { background: "transparent", border: "#7c4e56", color: "#e98c8c" },
+  }[variant];
   return (
     <button
       type={type ?? "button"}
+      data-variant={variant}
+      data-size={size}
       style={{
-        background,
-        color,
-        border: "none",
-        borderRadius: 8,
-        padding: "8px 16px",
+        background: palette.background,
+        color: palette.color,
+        border: `1px solid ${palette.border}`,
+        borderRadius: 7,
+        padding: size === "compact" ? "5px 9px" : "8px 13px",
         fontSize: 14,
         fontWeight: 600,
         cursor: "pointer",
+        transition: "background 120ms ease, border-color 120ms ease, color 120ms ease",
+        ...style,
       }}
       {...rest}
     >

@@ -1,4 +1,6 @@
-const API_BASE_URL = (typeof import.meta !== "undefined" && import.meta.env?.VITE_API_URL) ?? "http://localhost:3001";
+const API_BASE_URL =
+  (import.meta.env as unknown as { readonly VITE_API_URL?: string }).VITE_API_URL ??
+  "http://localhost:3001";
 
 export interface AuthUser {
   readonly id: string;
@@ -14,18 +16,24 @@ interface AuthSessionResponse {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const headers = new Headers(init?.headers);
+  headers.set("Content-Type", "application/json");
   const response = await fetch(`${API_BASE_URL}${path}`, {
     credentials: "include",
     ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...(init?.headers ?? {}),
-    },
+    headers,
   });
 
   if (!response.ok) {
-    const payload = await response.json().catch(() => undefined);
-    throw new Error((payload as { error?: string } | undefined)?.error ?? `Auth request failed: ${response.status}`);
+    const payload: unknown = await response.json().catch(() => undefined);
+    const error =
+      typeof payload === "object" &&
+      payload !== null &&
+      "error" in payload &&
+      typeof payload.error === "string"
+        ? payload.error
+        : undefined;
+    throw new Error(error ?? `Auth request failed: ${String(response.status)}`);
   }
 
   return (await response.json()) as T;

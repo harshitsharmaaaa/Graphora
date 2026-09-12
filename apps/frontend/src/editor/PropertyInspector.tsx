@@ -188,8 +188,21 @@ function StyleControls({
           value={sample.fillStyle}
           onChange={(e) => {
             const style = e.target.value;
-            if (style === "none" || style === "solid" || style === "hachure" || style === "cross-hatch") {
-              apply({ fillStyle: style, backgroundColor: style === "none" ? "transparent" : sample.backgroundColor === "transparent" ? "#818cf8" : sample.backgroundColor });
+            if (
+              style === "none" ||
+              style === "solid" ||
+              style === "hachure" ||
+              style === "cross-hatch"
+            ) {
+              apply({
+                fillStyle: style,
+                backgroundColor:
+                  style === "none"
+                    ? "transparent"
+                    : sample.backgroundColor === "transparent"
+                      ? "#818cf8"
+                      : sample.backgroundColor,
+              });
             }
           }}
         >
@@ -539,9 +552,22 @@ export function PropertyInspector({ app }: { readonly app: EditorApp }): JSX.Ele
   const selected = page.elements.filter((element) => wanted.has(element.id));
   return (
     <aside className="inspector" aria-label="Properties">
+      <div className="inspector-top">
+        <div>
+          <span className="panel-kicker">Properties</span>
+          <strong>Inspector</strong>
+        </div>
+        <span className="inspector-count">
+          {selected.length === 0 ? "—" : String(selected.length).padStart(2, "0")}
+        </span>
+      </div>
       {selected.length === 0 && (
         <div className="inspector-empty">
+          <div className="empty-state-mark" aria-hidden="true">
+            +
+          </div>
           <h3>Nothing selected</h3>
+          <p>Select an object on the canvas to inspect its geometry and style.</p>
           <ul>
             <li>Drag a tool to create a shape</li>
             <li>Click to select, drag to move</li>

@@ -81,7 +81,12 @@ export {
 export type { ClipboardPayload } from "./clipboard/index.js";
 export type { DocumentPersistence } from "./persistence/types.js";
 export { EventEmitter } from "./events/index.js";
-export type { EditorEvent, EditorEventType, EditorListener } from "./events/index.js";
+export type {
+  EditorEvent,
+  EditorEventType,
+  EditorListener,
+  EditorMutationOrigin,
+} from "./events/index.js";
 export { createId } from "./ids/index.js";
 export { Editor, createEditor } from "./editor/index.js";
-export type { EditorOptions } from "./editor/index.js";
+export type { DispatchOptions, DocumentLoadOptions, EditorOptions } from "./editor/index.js";

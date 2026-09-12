@@ -47,11 +47,11 @@ export function migrateDocument(data: unknown): unknown {
   if (migrated.assets === undefined) migrated.assets = {};
   const pages = migrated.pages;
   if (Array.isArray(pages)) {
-    migrated.pages = pages.map((page) => {
+    migrated.pages = pages.map((page: unknown) => {
       if (!isRecord(page) || !Array.isArray(page.elements)) return page;
       return {
         ...page,
-        elements: page.elements.map((element) => {
+        elements: page.elements.map((element: unknown) => {
           if (!isRecord(element) || element.fillStyle !== undefined) return element;
           return {
             ...element,
