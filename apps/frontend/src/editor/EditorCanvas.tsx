@@ -137,7 +137,7 @@ export function EditorCanvas({
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
     };
-  }, [app, render]);
+  }, [app, render, readOnly]);
 
   const toLocal = (clientX: number, clientY: number): Point => {
     const canvas = canvasRef.current;
